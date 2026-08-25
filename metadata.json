@@ -1,0 +1,6 @@
+{
+  "name": "COMET LPs - Alta conversão",
+  "description": "Construtor de Landing Pages de Alta Conversão com IA, Bento Grid, Quiz Interativo e Webhook.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
