@@ -18,6 +18,7 @@ import { ImagePickerModal } from "./ImagePickerModal";
 import { LogoManagerModal } from "./LogoManagerModal";
 import { IconPickerModal } from "./IconPickerModal";
 import { HeroModelSelector } from "./HeroModelSelector";
+import { NetworkPreviewModal } from "./NetworkPreviewModal";
 import { motion, AnimatePresence } from "motion/react";
 import {
   ArrowLeft,
@@ -68,6 +69,8 @@ import {
   PanelLeftOpen,
   Expand,
   Shrink,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 interface EditorProps {
@@ -132,6 +135,7 @@ export const Editor: React.FC<EditorProps> = ({ page: initialPage, onSave, onBac
 
   const [isLogoManagerOpen, setIsLogoManagerOpen] = useState(false);
   const [isHeroModelModalOpen, setIsHeroModelModalOpen] = useState(false);
+  const [isNetworkPreviewOpen, setIsNetworkPreviewOpen] = useState(false);
 
   // Icon picker state
   const [iconPickerConfig, setIconPickerConfig] = useState<{
@@ -171,6 +175,8 @@ export const Editor: React.FC<EditorProps> = ({ page: initialPage, onSave, onBac
   };
 
   const handleExportHtml = () => {
+    // Explicitly persist current editor page state to parent/local storage
+    onSave(page);
     const htmlContent = generateStandaloneHtml(page);
     const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -193,7 +199,12 @@ export const Editor: React.FC<EditorProps> = ({ page: initialPage, onSave, onBac
   const updatePage = (updater: (prev: LandingPage) => LandingPage) => {
     setPage((prev) => {
       const updated = updater(prev);
-      return { ...updated, updatedAt: new Date().toISOString() };
+      const withTime = { ...updated, updatedAt: new Date().toISOString() };
+      // Safely propagate changes back to parent and local storage on the next tick
+      setTimeout(() => {
+        onSave(withTime);
+      }, 0);
+      return withTime;
     });
   };
 
@@ -395,6 +406,13 @@ export const Editor: React.FC<EditorProps> = ({ page: initialPage, onSave, onBac
         title={iconPickerConfig.title}
       />
 
+      {/* Network & Standalone Preview Modal */}
+      <NetworkPreviewModal
+        isOpen={isNetworkPreviewOpen}
+        onClose={() => setIsNetworkPreviewOpen(false)}
+        page={page}
+      />
+
       {/* Top Navbar */}
       <header className="h-16 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md px-4 flex items-center justify-between z-30 flex-shrink-0">
         {/* Left: Back & Title */}
@@ -422,73 +440,126 @@ export const Editor: React.FC<EditorProps> = ({ page: initialPage, onSave, onBac
           </div>
         </div>
 
-        {/* Center: Device Switcher */}
-        <div className="hidden md:flex items-center gap-1 p-1 rounded-xl bg-zinc-900 border border-zinc-800">
-          <button
-            onClick={() => setDeviceView("desktop")}
-            className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer ${
-              deviceView === "desktop" ? "bg-zinc-800 text-white" : "text-zinc-400 hover:text-white"
-            }`}
-          >
-            <Monitor className="w-4 h-4" />
-            <span className="hidden lg:inline">Desktop</span>
-          </button>
-          <button
-            onClick={() => setDeviceView("tablet")}
-            className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer ${
-              deviceView === "tablet" ? "bg-zinc-800 text-white" : "text-zinc-400 hover:text-white"
-            }`}
-          >
-            <Tablet className="w-4 h-4" />
-            <span className="hidden lg:inline">Tablet</span>
-          </button>
-          <button
-            onClick={() => setDeviceView("mobile")}
-            className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer ${
-              deviceView === "mobile" ? "bg-zinc-800 text-white" : "text-zinc-400 hover:text-white"
-            }`}
-          >
-            <Smartphone className="w-4 h-4" />
-            <span className="hidden lg:inline">Mobile</span>
-          </button>
-        </div>
-
-        {/* Right: Actions */}
-        <div className="flex items-center gap-2 flex-nowrap">
-          {/* Accent Color Picker Pill */}
-          <div className="hidden sm:flex items-center gap-1.5 p-1 rounded-xl bg-zinc-900 border border-zinc-800">
-            {(["purple", "emerald", "cyan", "amber", "rose"] as AccentColor[]).map((c) => {
-              const cfg = THEME_CONFIGS[c];
-              const isSelected = page.accentColor === c;
-              return (
-                <button
-                  key={c}
-                  onClick={() => updatePage((p) => ({ ...p, accentColor: c }))}
-                  className={`w-5 h-5 rounded-full transition-transform cursor-pointer ${
-                    isSelected ? "ring-2 ring-white scale-110" : "opacity-60 hover:opacity-100"
-                  }`}
-                  style={{ backgroundColor: cfg.primaryHex }}
-                  title={cfg.name}
-                />
-              );
-            })}
-          </div>
-
-          {/* Fullscreen / Expand Screen Icon Button */}
+        {/* Center: Fullscreen & Device Switcher (Notebook, Tablet, Mobile) */}
+        <div className="hidden md:flex items-center gap-2">
+          {/* Fullscreen / Expand Screen Icon Button (First, ahead of device modes) */}
           <button
             onClick={handleToggleFullscreen}
-            className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center transition-all cursor-pointer ${
+            className={`p-2 rounded-xl border text-xs font-semibold flex items-center justify-center transition-all cursor-pointer ${
               isFullscreen
                 ? "bg-purple-600 border-purple-500 text-white shadow-lg shadow-purple-950/50"
                 : "bg-zinc-900 border-zinc-800 text-zinc-300 hover:text-white hover:border-zinc-700"
             }`}
-            title={isFullscreen ? "Sair da Tela Cheia" : "Expandir para Tela Cheia"}
+            title={isFullscreen ? "Sair da Tela Cheia" : "Expandir para Tela Cheia (F11 / Preview Completo)"}
           >
             {isFullscreen ? (
               <Minimize2 className="w-4 h-4" />
             ) : (
               <Maximize2 className="w-4 h-4" />
             )}
+          </button>
+
+          {/* Device Switcher (Notebook, Tablet, Mobile) - Icon-only with hover labels */}
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-zinc-900 border border-zinc-800">
+            <button
+              onClick={() => setDeviceView("desktop")}
+              className={`p-2 rounded-lg text-xs font-semibold flex items-center justify-center transition-colors cursor-pointer ${
+                deviceView === "desktop" ? "bg-zinc-800 text-white shadow" : "text-zinc-400 hover:text-white"
+              }`}
+              title="Notebook / Desktop"
+            >
+              <Monitor className="w-4 h-4" />
+              <span className="sr-only">Notebook</span>
+            </button>
+            <button
+              onClick={() => setDeviceView("tablet")}
+              className={`p-2 rounded-lg text-xs font-semibold flex items-center justify-center transition-colors cursor-pointer ${
+                deviceView === "tablet" ? "bg-zinc-800 text-white shadow" : "text-zinc-400 hover:text-white"
+              }`}
+              title="Tablet"
+            >
+              <Tablet className="w-4 h-4" />
+              <span className="sr-only">Tablet</span>
+            </button>
+            <button
+              onClick={() => setDeviceView("mobile")}
+              className={`p-2 rounded-lg text-xs font-semibold flex items-center justify-center transition-colors cursor-pointer ${
+                deviceView === "mobile" ? "bg-zinc-800 text-white shadow" : "text-zinc-400 hover:text-white"
+              }`}
+              title="Mobile"
+            >
+              <Smartphone className="w-4 h-4" />
+              <span className="sr-only">Mobile</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Right: Actions */}
+        <div className="flex items-center gap-2 flex-nowrap">
+          {/* Theme Mode Toggle (Escuro / Claro) */}
+          <div className="flex items-center bg-zinc-900 border border-zinc-800 p-0.5 rounded-xl text-xs">
+            <button
+              type="button"
+              onClick={() => updatePage((p) => ({ ...p, theme: "dark" }))}
+              className={`px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 transition-all cursor-pointer ${
+                page.theme !== "light"
+                  ? "bg-purple-600 text-white shadow-sm"
+                  : "text-zinc-400 hover:text-white"
+              }`}
+              title="Mudar para Tema Escuro (Fundo Dark Moderno)"
+            >
+              <Moon className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Escuro</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => updatePage((p) => ({ ...p, theme: "light" }))}
+              className={`px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 transition-all cursor-pointer ${
+                page.theme === "light"
+                  ? "bg-amber-500 text-zinc-950 shadow-sm"
+                  : "text-zinc-400 hover:text-white"
+              }`}
+              title="Mudar para Tema Claro (Fundo 100% Branco com elementos na cor escolhida)"
+            >
+              <Sun className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Claro (Branco)</span>
+            </button>
+          </div>
+
+          {/* Accent Color Picker (Dropdown) */}
+          <div className="hidden md:flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 px-2.5 py-1.5 rounded-xl text-xs text-white">
+            <Palette className="w-3.5 h-3.5 text-purple-400" />
+            <span className="text-zinc-400 font-bold">Cor:</span>
+            <select
+              value={page.accentColor}
+              onChange={(e) => updatePage((p) => ({ ...p, accentColor: e.target.value as AccentColor }))}
+              className="bg-zinc-950 text-white font-bold py-1 px-2 rounded-lg border border-zinc-800 outline-none cursor-pointer focus:border-purple-500"
+            >
+              <option value="purple">Cyber Purple (Roxo)</option>
+              <option value="emerald">Verde Esmeralda</option>
+              <option value="cyan">Electric Cyan (Ciano)</option>
+              <option value="amber">Sunset Amber (Âmbar)</option>
+              <option value="rose">Rosa Crimson (Rosa)</option>
+              <option value="orange">Laranja Degradê</option>
+              <option value="blue">Azul Royal</option>
+              <option value="indigo">Índigo Profundo</option>
+              <option value="red">Vermelho Fogo</option>
+              <option value="teal">Verde Água</option>
+              <option value="gray">Grafite (Cinza)</option>
+            </select>
+          </div>
+
+          {/* Link Teste (Network Preview / Share Modal) */}
+          <button
+            onClick={() => {
+              onSave(page);
+              setIsNetworkPreviewOpen(true);
+            }}
+            className="px-3 py-2 rounded-xl bg-purple-950/60 border border-purple-500/40 hover:bg-purple-900/80 text-purple-300 hover:text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm shadow-purple-950/40"
+            title="Link de Teste (Visualizar em outro navegador ou celular via QR Code / URL)"
+          >
+            <Globe className="w-4 h-4 text-purple-400" />
+            <span className="hidden sm:inline">Link Teste</span>
           </button>
 
           {/* Toggle Full Preview */}
@@ -661,57 +732,122 @@ export const Editor: React.FC<EditorProps> = ({ page: initialPage, onSave, onBac
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-4 gap-1 p-1 bg-zinc-950 rounded-xl border border-zinc-800 text-[10px] font-bold">
-                      {[
-                        { id: "dark", label: "Escuro" },
-                        { id: "light", label: "Claro (Light)" },
-                        { id: "hybrid", label: "Híbrido" },
-                        { id: "midnight", label: "Midnight" },
-                      ].map((t) => (
-                        <button
-                          key={t.id}
-                          type="button"
-                          onClick={() => updatePage((p) => ({ ...p, theme: t.id as any }))}
-                          className={`py-1.5 rounded-lg transition-all cursor-pointer text-center ${
-                            page.theme === t.id
-                              ? "bg-purple-600 text-white shadow"
-                              : "text-zinc-400 hover:text-white"
-                          }`}
+                    <div className="grid grid-cols-2 gap-2 p-1.5 bg-zinc-950 rounded-xl border border-zinc-800 text-xs font-bold">
+                      <button
+                        type="button"
+                        onClick={() => updatePage((p) => ({ ...p, theme: "dark" }))}
+                        className={`py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                          page.theme !== "light"
+                            ? "bg-purple-600 text-white shadow-md shadow-purple-900/50"
+                            : "text-zinc-400 hover:text-white hover:bg-zinc-900"
+                        }`}
+                      >
+                        <Moon className="w-4 h-4" />
+                        <span>🌙 Escuro</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => updatePage((p) => ({ ...p, theme: "light" }))}
+                        className={`py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                          page.theme === "light"
+                            ? "bg-amber-500 text-zinc-950 font-extrabold shadow-md shadow-amber-900/30"
+                            : "text-zinc-400 hover:text-white hover:bg-zinc-900"
+                        }`}
+                      >
+                        <Sun className="w-4 h-4 text-zinc-950" />
+                        <span>☀️ Claro (Branco)</span>
+                      </button>
+                    </div>
+
+                    {/* ACCENT COLOR SELECTION */}
+                    <div className="space-y-2.5 pt-3 border-t border-zinc-800/80">
+                      <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                        <Palette className="w-4 h-4 text-purple-400" />
+                        <span>Cor de Destaque do Tema</span>
+                      </span>
+                      
+                      <div className="grid grid-cols-1 gap-2">
+                        <select
+                          value={page.accentColor}
+                          onChange={(e) => updatePage((p) => ({ ...p, accentColor: e.target.value as AccentColor }))}
+                          className="w-full bg-zinc-950 text-white font-bold py-2 px-3 rounded-xl border border-zinc-800 outline-none cursor-pointer focus:border-purple-500 text-xs text-left"
                         >
-                          {t.label}
-                        </button>
-                      ))}
+                          <option value="purple">Cyber Purple (Roxo)</option>
+                          <option value="emerald">Verde Esmeralda</option>
+                          <option value="cyan">Electric Cyan (Ciano)</option>
+                          <option value="amber">Sunset Amber (Âmbar)</option>
+                          <option value="rose">Rosa Crimson (Rosa)</option>
+                          <option value="orange">Laranja Degradê</option>
+                          <option value="blue">Azul Royal</option>
+                          <option value="indigo">Índigo Profundo</option>
+                          <option value="red">Vermelho Fogo</option>
+                          <option value="teal">Verde Água</option>
+                          <option value="gray">Grafite (Cinza)</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1.5 pt-2">
+                        <span className="text-[10px] text-zinc-400 font-bold block">Tonalidade da Cor</span>
+                        <div className="grid grid-cols-3 gap-1 p-1 bg-zinc-950 rounded-xl border border-zinc-800 text-[10px] font-bold">
+                          {(["light", "normal", "dark"] as const).map((s) => {
+                            const label = s === "light" ? "Claro" : s === "dark" ? "Escuro" : "Padrão";
+                            const isSelected = (page.accentShade || "normal") === s;
+                            return (
+                              <button
+                                key={s}
+                                type="button"
+                                onClick={() => updatePage((p) => ({ ...p, accentShade: s }))}
+                                className={`py-1 rounded-lg transition-all cursor-pointer text-center ${
+                                  isSelected ? "bg-purple-600 text-white shadow" : "text-zinc-400 hover:text-white"
+                                }`}
+                              >
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
 
                     {/* Header Navigation Toggle */}
-                    <div className="flex items-center justify-between pt-2 border-t border-zinc-800">
+                    <div className="flex items-center justify-between pt-3 border-t border-zinc-800/80 mt-1 bg-purple-950/20 p-3 rounded-xl border border-purple-500/20 shadow-md shadow-purple-950/20">
                       <div>
-                        <span className="text-xs font-bold text-white block">Cabeçalho (Menu Superior)</span>
-                        <span className="text-[10px] text-zinc-400">Ativar barra de links e CTA no topo</span>
+                        <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+                          <span>Menu Superior (Cabeçalho)</span>
+                        </span>
+                        <span className="text-[10px] text-zinc-400 block mt-0.5 leading-snug">Habilitar barra de links e botão CTA fixa no topo</span>
                       </div>
-                      <input
-                        type="checkbox"
-                        checked={page.headerNav?.enabled || false}
-                        onChange={(e) =>
+                      <button
+                        type="button"
+                        onClick={() =>
                           updatePage((p) => ({
                             ...p,
                             headerNav: {
-                              enabled: e.target.checked,
-                              logoType: "text",
+                              ...p.headerNav,
+                              logoType: p.headerNav?.logoType || "text",
                               logoText: p.headerNav?.logoText || "COMET.LP",
                               ctaText: p.headerNav?.ctaText || "Quero uma Bolsa",
-                              ctaTargetSectionId: "formSection",
+                              ctaTargetSectionId: p.headerNav?.ctaTargetSectionId || "formSection",
                               links: p.headerNav?.links || [
                                 { id: "l1", label: "Cursos", targetSectionId: "bentoGrid" },
                                 { id: "l2", label: "Por que a People?", targetSectionId: "bentoGrid" },
                                 { id: "l3", label: "Depoimentos", targetSectionId: "testimonials" },
                                 { id: "l4", label: "Faq", targetSectionId: "faq" },
                               ],
+                              enabled: !(page.headerNav?.enabled),
                             },
                           }))
                         }
-                        className="w-4 h-4 accent-purple-600 rounded cursor-pointer"
-                      />
+                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                          page.headerNav?.enabled
+                            ? "bg-emerald-600 text-white"
+                            : "bg-zinc-950 text-zinc-400 border border-zinc-800 hover:text-white"
+                        }`}
+                      >
+                        {page.headerNav?.enabled ? "Habilitado" : "Desabilitado"}
+                      </button>
                     </div>
                   </div>
 
@@ -1821,7 +1957,7 @@ export const Editor: React.FC<EditorProps> = ({ page: initialPage, onSave, onBac
                                 Palavras em Animação (Trocam Automaticamente)
                               </label>
                               <div className="flex flex-wrap gap-1.5 mb-2">
-                                {(page.hero.typewriterWords || ["Carreira", "Vida", "Profissão", "Competência"]).map(
+                                {(page.hero.typewriterWords || ["Curso", "Carreira", "Vida", "Profissão", "Competência"]).map(
                                   (word, wIdx) => (
                                     <span
                                       key={wIdx}
@@ -1832,7 +1968,7 @@ export const Editor: React.FC<EditorProps> = ({ page: initialPage, onSave, onBac
                                         type="button"
                                         onClick={() => {
                                           const nextWords = (
-                                            page.hero.typewriterWords || ["Carreira", "Vida", "Profissão", "Competência"]
+                                            page.hero.typewriterWords || ["Curso", "Carreira", "Vida", "Profissão", "Competência"]
                                           ).filter((_, i) => i !== wIdx);
                                           updatePage((p) => ({
                                             ...p,
@@ -1858,7 +1994,7 @@ export const Editor: React.FC<EditorProps> = ({ page: initialPage, onSave, onBac
                                       e.preventDefault();
                                       const val = (e.target as HTMLInputElement).value.trim();
                                       if (val) {
-                                        const current = page.hero.typewriterWords || ["Carreira", "Vida", "Profissão", "Competência"];
+                                        const current = page.hero.typewriterWords || ["Curso", "Carreira", "Vida", "Profissão", "Competência"];
                                         updatePage((p) => ({
                                           ...p,
                                           hero: { ...p.hero, typewriterWords: [...current, val] },
@@ -1877,7 +2013,7 @@ export const Editor: React.FC<EditorProps> = ({ page: initialPage, onSave, onBac
                                     ) as HTMLInputElement;
                                     if (input && input.value.trim()) {
                                       const val = input.value.trim();
-                                      const current = page.hero.typewriterWords || ["Carreira", "Vida", "Profissão", "Competência"];
+                                      const current = page.hero.typewriterWords || ["Curso", "Carreira", "Vida", "Profissão", "Competência"];
                                       updatePage((p) => ({
                                         ...p,
                                         hero: { ...p.hero, typewriterWords: [...current, val] },
@@ -1908,6 +2044,24 @@ export const Editor: React.FC<EditorProps> = ({ page: initialPage, onSave, onBac
                                 }
                                 placeholder="Ex: com nosso método de alta conversão"
                                 className="w-full px-3 py-1.5 rounded-xl bg-zinc-950 border border-zinc-800 text-xs text-white"
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-950 border border-zinc-800">
+                              <div>
+                                <span className="text-[11px] font-bold text-white block">Exibir cursor de digitação (|)</span>
+                                <span className="text-[10px] text-zinc-400">Mostra o cursor piscando no final da palavra</span>
+                              </div>
+                              <input
+                                type="checkbox"
+                                checked={page.hero.typewriterShowCursor !== false}
+                                onChange={(e) =>
+                                  updatePage((p) => ({
+                                    ...p,
+                                    hero: { ...p.hero, typewriterShowCursor: e.target.checked },
+                                  }))
+                                }
+                                className="w-4 h-4 accent-purple-600 rounded cursor-pointer"
                               />
                             </div>
                           </div>
@@ -2523,6 +2677,55 @@ export const Editor: React.FC<EditorProps> = ({ page: initialPage, onSave, onBac
                     <span className="text-[11px] text-zinc-500">Mova com as setas</span>
                   </div>
 
+                  {/* Menu Superior (Header Navbar) Toggle */}
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-purple-950/40 to-zinc-900 border border-purple-500/30 flex items-center justify-between gap-4 shadow-lg shadow-purple-950/10">
+                    <div>
+                      <span className="text-xs font-extrabold text-white flex items-center gap-1.5 uppercase tracking-wider">
+                        <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+                        <span>Menu Superior (Cabeçalho)</span>
+                      </span>
+                      <span className="text-[11px] text-zinc-400 block mt-1 leading-relaxed">
+                        Habilite ou desabilite a barra de links e botão de CTA fixa no topo da sua página de forma visível e prática.
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updatePage((p) => ({
+                          ...p,
+                          headerNav: {
+                            ...p.headerNav,
+                            logoType: p.headerNav?.logoType || "text",
+                            logoText: p.headerNav?.logoText || "COMET.LP",
+                            ctaText: p.headerNav?.ctaText || "Quero uma Bolsa",
+                            ctaTargetSectionId: p.headerNav?.ctaTargetSectionId || "formSection",
+                            links: p.headerNav?.links || [
+                              { id: "l1", label: "Cursos", targetSectionId: "bentoGrid" },
+                              { id: "l2", label: "Por que a People?", targetSectionId: "bentoGrid" },
+                              { id: "l3", label: "Depoimentos", targetSectionId: "testimonials" },
+                              { id: "l4", label: "Faq", targetSectionId: "faq" },
+                            ],
+                            enabled: !(page.headerNav?.enabled),
+                          },
+                        }))
+                      }
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                        page.headerNav?.enabled
+                          ? "bg-emerald-600 text-white shadow-lg shadow-emerald-950/50"
+                          : "bg-zinc-950 text-zinc-400 border border-zinc-800 hover:text-white"
+                      }`}
+                    >
+                      {page.headerNav?.enabled ? (
+                        <>
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Habilitado</span>
+                        </>
+                      ) : (
+                        <span>Desabilitado</span>
+                      )}
+                    </button>
+                  </div>
+
                   <div className="space-y-2">
                     {(page.sectionOrder || [
                       "hero",
@@ -2867,8 +3070,9 @@ export const Editor: React.FC<EditorProps> = ({ page: initialPage, onSave, onBac
         logos={page.socialProof?.marqueeLogos || []}
         logoItems={page.socialProof?.logoItems}
         colorMode={page.socialProof?.logoColorMode || "original"}
+        logoSize={page.socialProof?.logoSize || "sm"}
         accentColorName={page.accentColor}
-        onUpdateLogos={(updatedLogos, mode, updatedItems) => {
+        onUpdateLogos={(updatedLogos, mode, updatedItems, size) => {
           updatePage((p) => ({
             ...p,
             socialProof: {
@@ -2876,9 +3080,10 @@ export const Editor: React.FC<EditorProps> = ({ page: initialPage, onSave, onBac
               marqueeLogos: updatedLogos,
               logoItems: updatedItems || p.socialProof.logoItems,
               logoColorMode: mode,
+              logoSize: size || p.socialProof.logoSize || "sm",
             },
           }));
-          showNotification("Logos e cores atualizadas!");
+          showNotification("Logos, cores e tamanho atualizados!");
         }}
       />
 
@@ -2913,6 +3118,14 @@ export const Editor: React.FC<EditorProps> = ({ page: initialPage, onSave, onBac
           onClose={() => setIsHeroModelModalOpen(false)}
         />
       )}
+
+      {/* Network Preview Modal */}
+      <NetworkPreviewModal
+        isOpen={isNetworkPreviewOpen}
+        onClose={() => setIsNetworkPreviewOpen(false)}
+        page={page}
+        onUpdatePage={(updatedPage) => updatePage(() => updatedPage)}
+      />
     </div>
   );
 };

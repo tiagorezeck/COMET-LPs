@@ -15,6 +15,7 @@ import {
   HeroModel,
   ElementOffset,
   ButtonCustomStyle,
+  DEFAULT_HEADER_NAV,
 } from "../types/landingPage";
 import { THEME_CONFIGS } from "../utils/theme";
 import { DynamicIcon } from "./DynamicIcon";
@@ -262,6 +263,24 @@ export const getContainerWidthClass = (width?: ContainerWidth) => {
   }
 };
 
+export const getThemeCardBgClass = (color: string, theme: string) => {
+  if (theme !== "light") return "bg-zinc-900/60 border border-zinc-800/80 backdrop-blur-md hover:border-zinc-700/80";
+  switch (color) {
+    case "purple": return "bg-white border border-purple-200/90 shadow-md shadow-purple-950/5 hover:border-purple-400 text-zinc-900";
+    case "emerald": return "bg-white border border-emerald-200/90 shadow-md shadow-emerald-950/5 hover:border-emerald-400 text-zinc-900";
+    case "cyan": return "bg-white border border-cyan-200/90 shadow-md shadow-cyan-950/5 hover:border-cyan-400 text-zinc-900";
+    case "amber": return "bg-white border border-amber-200/90 shadow-md shadow-amber-950/5 hover:border-amber-400 text-zinc-900";
+    case "rose": return "bg-white border border-rose-200/90 shadow-md shadow-rose-950/5 hover:border-rose-400 text-zinc-900";
+    case "orange": return "bg-white border border-orange-200/90 shadow-md shadow-orange-950/5 hover:border-orange-400 text-zinc-900";
+    case "blue": return "bg-white border border-blue-200/90 shadow-md shadow-blue-950/5 hover:border-blue-400 text-zinc-900";
+    case "indigo": return "bg-white border border-indigo-200/90 shadow-md shadow-indigo-950/5 hover:border-indigo-400 text-zinc-900";
+    case "red": return "bg-white border border-red-200/90 shadow-md shadow-red-950/5 hover:border-red-400 text-zinc-900";
+    case "teal": return "bg-white border border-teal-200/90 shadow-md shadow-teal-950/5 hover:border-teal-400 text-zinc-900";
+    case "gray": return "bg-white border border-zinc-200/90 shadow-md shadow-zinc-950/5 hover:border-zinc-400 text-zinc-900";
+    default: return "bg-white border border-zinc-200/90 shadow-md text-zinc-900";
+  }
+};
+
 export const getBentoSizeClasses = (size?: "large" | "tall" | "wide" | "standard") => {
   switch (size) {
     case "wide":
@@ -422,6 +441,28 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
 
   // FAQ open toggles
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+
+  // Slideshow state for Model 10 (fullscreen_slideshow)
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [isSlideshowPlaying, setIsSlideshowPlaying] = useState(true);
+
+  const slideshowImages = (page.hero?.slideshowImages && page.hero.slideshowImages.length > 0)
+    ? page.hero.slideshowImages
+    : [
+        "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80",
+        "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1600&q=80",
+        "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1600&q=80",
+      ];
+
+  const slideIntervalSec = page.hero?.slideshowIntervalSeconds || 3;
+
+  useEffect(() => {
+    if (!isSlideshowPlaying || page.hero?.model !== "fullscreen_slideshow") return;
+    const interval = setInterval(() => {
+      setCurrentSlideIndex((prev) => (prev + 1) % slideshowImages.length);
+    }, Math.max(1, slideIntervalSec) * 1000);
+    return () => clearInterval(interval);
+  }, [isSlideshowPlaying, slideshowImages.length, slideIntervalSec, page.hero?.model]);
 
   // Countdown timer state
   const [timeLeft, setTimeLeft] = useState({
@@ -698,7 +739,22 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                     inline
                     className="mb-6"
                   >
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-900/90 backdrop-blur-md border border-zinc-800 text-xs sm:text-sm font-semibold shadow-xl shadow-black/40 hover:border-zinc-700 transition-colors">
+                    <div
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${
+                        page.theme === "light"
+                          ? "text-xs sm:text-sm font-semibold shadow-sm"
+                          : "bg-zinc-900/90 backdrop-blur-md border border-zinc-800 text-xs sm:text-sm font-semibold shadow-xl shadow-black/40 hover:border-zinc-700 transition-colors"
+                      }`}
+                      style={
+                        page.theme === "light" && (page.customAccentHex || theme.primaryHex)
+                          ? {
+                              backgroundColor: `${page.customAccentHex || theme.primaryHex}12`,
+                              borderColor: `${page.customAccentHex || theme.primaryHex}30`,
+                              color: page.customAccentHex || theme.primaryHex,
+                            }
+                          : undefined
+                      }
+                    >
                       <span className={`w-2 h-2 rounded-full ${theme.badgeBg} animate-ping`} />
                       <button
                         type="button"
@@ -748,7 +804,9 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                     <div
                       className={`font-bold ${getHeadlineSizeClass(
                         page.hero.headlineSize
-                      )} ${getHeadingAlignClass(headlineAlign)} leading-[1.12] tracking-tight text-white w-full`}
+                      )} ${getHeadingAlignClass(headlineAlign)} leading-[1.12] tracking-tight ${
+                        page.theme === "light" ? "text-zinc-900" : "text-white"
+                      } w-full`}
                       style={{
                         fontSize: page.hero.headlineFontSizePx ? `${page.hero.headlineFontSizePx}px` : undefined,
                         lineHeight: page.hero.headlineFontSizePx && page.hero.headlineFontSizePx < 28 ? "1.25" : undefined,
@@ -757,10 +815,12 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                       {page.hero.typewriterEnabled ? (
                         <TypewriterHeadline
                           prefix={page.hero.typewriterPrefix || ""}
-                          words={page.hero.typewriterWords || ["Carreira", "Vida", "Profissão", "Competência"]}
+                          words={page.hero.typewriterWords || ["Curso", "Carreira", "Vida", "Profissão", "Competência"]}
                           suffix={page.hero.typewriterSuffix || ""}
-                          accentClass={theme.gradientText ? `bg-gradient-to-r ${theme.gradientText} bg-clip-text text-transparent` : theme.iconText}
-                          accentHex={page.customAccentHex}
+                          showCursor={page.hero.typewriterShowCursor !== false}
+                          accentClass={page.theme === "light" ? "" : (theme.gradientText ? `bg-gradient-to-r ${theme.gradientText} bg-clip-text text-transparent` : theme.iconText)}
+                          accentHex={page.customAccentHex || theme.primaryHex}
+                          cursorColorHex={page.customAccentHex || theme.primaryHex}
                           isEditorPreview={isEditorPreview}
                           className="font-bold tracking-tight"
                         />
@@ -830,9 +890,9 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                     className="mb-8"
                   >
                     <div
-                      className={`text-zinc-400 ${getSubheadlineSizeClass(
-                        page.hero.subheadlineSize
-                      )} ${getHeadingAlignClass(subheadlineAlign)} leading-relaxed font-normal w-full`}
+                      className={`leading-relaxed font-normal w-full ${
+                        page.theme === "light" ? "text-zinc-600" : "text-zinc-400"
+                      } ${getSubheadlineSizeClass(page.hero.subheadlineSize)} ${getHeadingAlignClass(subheadlineAlign)}`}
                       style={{
                         fontSize: page.hero.subheadlineFontSizePx ? `${page.hero.subheadlineFontSizePx}px` : undefined,
                       }}
@@ -900,8 +960,14 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                     label="Prova Social & Cronômetro"
                     className="mb-8"
                   >
-                    <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-xs sm:text-sm text-zinc-300">
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-900/80 border border-zinc-800">
+                    <div className={`flex flex-wrap items-center gap-4 sm:gap-6 text-xs sm:text-sm ${
+                      page.theme === "light" ? "text-zinc-700" : "text-zinc-300"
+                    }`}>
+                      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${
+                        page.theme === "light"
+                          ? "bg-zinc-100 border border-zinc-200"
+                          : "bg-zinc-900/80 border border-zinc-800"
+                      }`}>
                         <Clock className="w-4 h-4 text-amber-400 animate-pulse" />
                         <span>
                           Oferta expira em:{" "}
@@ -957,40 +1023,103 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                     label="Botão de Ação CTA"
                     className="w-full max-w-md space-y-3"
                   >
-                    <VisualEditableButton
-                      buttonId="hero-primary-cta"
-                      text={page.hero.ctaText || "QUERO GARANTIR MINHA VAGA"}
-                      subtext={page.hero.ctaSubtext}
-                      onTextChange={(newText) =>
-                        updateP((p) => ({ ...p, hero: { ...p.hero, ctaText: newText } }))
-                      }
-                      onSubtextChange={(newSub) =>
-                        updateP((p) => ({ ...p, hero: { ...p.hero, ctaSubtext: newSub } }))
-                      }
-                      buttonStyle={getButtonStyle("hero-primary-cta", page.hero.ctaStyle)}
-                      onStyleChange={(s) => {
-                        setButtonStyle("hero-primary-cta", s);
-                        updateP((p) => ({ ...p, hero: { ...p.hero, ctaStyle: s } }));
-                      }}
-                      isEditorPreview={isEditorPreview}
-                      onClick={() => {
-                        if (!isEditorPreview) scrollToSection("form-section");
-                      }}
-                      themeGlow={theme.ctaGlow}
-                      nicheContext={page.niche}
-                    />
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 w-full">
+                      <div className="flex-[1.2]">
+                        <VisualEditableButton
+                          buttonId="hero-primary-cta"
+                          text={page.hero.ctaText || "QUERO GARANTIR MINHA VAGA"}
+                          onTextChange={(newText) =>
+                            updateP((p) => ({ ...p, hero: { ...p.hero, ctaText: newText } }))
+                          }
+                          buttonStyle={getButtonStyle("hero-primary-cta", page.hero.ctaStyle)}
+                          onStyleChange={(s) => {
+                            setButtonStyle("hero-primary-cta", s);
+                            updateP((p) => ({ ...p, hero: { ...p.hero, ctaStyle: s } }));
+                          }}
+                          isEditorPreview={isEditorPreview}
+                          onClick={() => {
+                            if (!isEditorPreview) scrollToSection("form-section");
+                          }}
+                          themeGlow={theme.ctaGlow}
+                          accentColor={page.accentColor}
+                          customAccentHex={page.customAccentHex}
+                          nicheContext={page.niche}
+                        />
+                      </div>
 
-                    <div className="flex items-center justify-center sm:justify-start gap-3 text-xs text-zinc-400 font-medium">
-                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                      <InlineEditableText
-                        value={page.hero.ctaSubtext || "Garantia incondicional de 30 dias • Acesso Imediato"}
-                        onChange={(newVal) =>
-                          updateP((p) => ({ ...p, hero: { ...p.hero, ctaSubtext: newVal } }))
-                        }
-                        isEditorPreview={isEditorPreview}
-                        tag="span"
-                        placeholder="Garantia ou micro-copy..."
-                      />
+                      <div className="flex-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!isEditorPreview) {
+                              const phone = page.formSection?.whatsappHelpNumber?.replace(/\D/g, "") || "5511999999999";
+                              window.open(`https://wa.me/${phone}?text=Olá,%20gostaria%20de%20saber%20mais%20sobre.`, "_blank");
+                            }
+                          }}
+                          className={`w-full py-4 px-6 rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                            page.theme === "light"
+                              ? "bg-white hover:bg-zinc-50 text-zinc-800 border border-zinc-200 shadow-sm"
+                              : "bg-zinc-900/90 hover:bg-zinc-800 text-white border border-zinc-800"
+                          }`}
+                        >
+                          <DynamicIcon name={page.hero.secondaryCtaIcon || "MessageSquare"} className={`w-4 h-4 ${page.theme === "light" ? "text-zinc-600" : "text-zinc-400"}`} />
+                          <InlineEditableText
+                            value={page.hero.secondaryCtaText || "Falar com Consultor"}
+                            onChange={(newVal) =>
+                              updateP((p) => ({ ...p, hero: { ...p.hero, secondaryCtaText: newVal } }))
+                            }
+                            isEditorPreview={isEditorPreview}
+                            tag="span"
+                            placeholder="Texto secundário..."
+                          />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2.5 w-full">
+                      {(page.hero.ctaSubtext || isEditorPreview) && (
+                        <div className={`flex items-center justify-center sm:justify-start gap-2 text-xs ${
+                          page.theme === "light" ? "text-zinc-500" : "text-zinc-400"
+                        } font-medium`}>
+                          <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                          <InlineEditableText
+                            value={page.hero.ctaSubtext || ""}
+                            onChange={(newVal) =>
+                              updateP((p) => ({ ...p, hero: { ...p.hero, ctaSubtext: newVal } }))
+                            }
+                            isEditorPreview={isEditorPreview}
+                            tag="span"
+                            placeholder="Garantia ou micro-copy..."
+                          />
+                        </div>
+                      )}
+
+                      {/* Clean checklist at bottom of Hero */}
+                      <div className={`flex flex-wrap items-center gap-4 sm:gap-6 text-xs font-semibold ${
+                        page.theme === "light" ? "text-zinc-700" : "text-zinc-300"
+                      } pt-1`}>
+                        <div className="flex items-center gap-1.5">
+                          <CheckCircle2
+                            className="w-4 h-4"
+                            style={{ color: page.customAccentHex || theme.primaryHex }}
+                          />
+                          <span>Certificado Reconhecido</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <CheckCircle2
+                            className="w-4 h-4"
+                            style={{ color: page.customAccentHex || theme.primaryHex }}
+                          />
+                          <span>Foco na Prática</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <CheckCircle2
+                            className="w-4 h-4"
+                            style={{ color: page.customAccentHex || theme.primaryHex }}
+                          />
+                          <span>Suporte Individual</span>
+                        </div>
+                      </div>
                     </div>
                   </DraggableElement>
                 </div>
@@ -1243,12 +1372,8 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                         <VisualEditableButton
                           buttonId="hero2-primary-cta"
                           text={page.hero.ctaText || "QUERO COMEÇAR AGORA"}
-                          subtext={page.hero.ctaSubtext}
                           onTextChange={(newText) =>
                             updateP((p) => ({ ...p, hero: { ...p.hero, ctaText: newText } }))
-                          }
-                          onSubtextChange={(newSub) =>
-                            updateP((p) => ({ ...p, hero: { ...p.hero, ctaSubtext: newSub } }))
                           }
                           buttonStyle={getButtonStyle("hero2-primary-cta", page.hero.ctaStyle)}
                           onStyleChange={(s) => {
@@ -1260,6 +1385,8 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                             if (!isEditorPreview) scrollToSection("form-section");
                           }}
                           themeGlow={theme.ctaGlow}
+                          accentColor={page.accentColor}
+                          customAccentHex={page.customAccentHex}
                           nicheContext={page.niche}
                         />
                       </div>
@@ -1286,18 +1413,20 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 text-xs text-zinc-400 font-medium">
-                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                      <InlineEditableText
-                        value={page.hero.ctaSubtext || "Acesso Imediato + 7 Dias de Garantia Total"}
-                        onChange={(newVal) =>
-                          updateP((p) => ({ ...p, hero: { ...p.hero, ctaSubtext: newVal } }))
-                        }
-                        isEditorPreview={isEditorPreview}
-                        tag="span"
-                        placeholder="Garantia..."
-                      />
-                    </div>
+                    {(page.hero.ctaSubtext || isEditorPreview) && (
+                      <div className="flex items-center gap-2 text-xs text-zinc-400 font-medium">
+                        <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                        <InlineEditableText
+                          value={page.hero.ctaSubtext || ""}
+                          onChange={(newVal) =>
+                            updateP((p) => ({ ...p, hero: { ...p.hero, ctaSubtext: newVal } }))
+                          }
+                          isEditorPreview={isEditorPreview}
+                          tag="span"
+                          placeholder="Garantia..."
+                        />
+                      </div>
+                    )}
                   </DraggableElement>
                 </div>
               );
@@ -1563,12 +1692,8 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                     <VisualEditableButton
                       buttonId="hero3-primary-cta"
                       text={page.hero.ctaText || "QUERO GARANTIR ACESSO"}
-                      subtext={page.hero.ctaSubtext}
                       onTextChange={(newText) =>
                         updateP((p) => ({ ...p, hero: { ...p.hero, ctaText: newText } }))
-                      }
-                      onSubtextChange={(newSub) =>
-                        updateP((p) => ({ ...p, hero: { ...p.hero, ctaSubtext: newSub } }))
                       }
                       buttonStyle={getButtonStyle("hero3-primary-cta", page.hero.ctaStyle)}
                       onStyleChange={(s) => {
@@ -1580,29 +1705,34 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                         if (!isEditorPreview) scrollToSection("form-section");
                       }}
                       themeGlow={theme.ctaGlow}
+                      accentColor={page.accentColor}
+                      customAccentHex={page.customAccentHex}
                       nicheContext={page.niche}
                     />
 
-                    <div className="flex items-center justify-center gap-4 text-xs text-zinc-400 font-medium">
-                      <span className="flex items-center gap-1">
-                        <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                        <InlineEditableText
-                          value={page.hero.ctaSubtext || "Sem cartão de crédito • Setup em 5 minutos"}
-                          onChange={(newVal) =>
-                            updateP((p) => ({ ...p, hero: { ...p.hero, ctaSubtext: newVal } }))
-                          }
-                          isEditorPreview={isEditorPreview}
-                          tag="span"
-                          placeholder="Micro-copy..."
-                        />
-                      </span>
-                    </div>
+                    {(page.hero.ctaSubtext || isEditorPreview) && (
+                      <div className="flex items-center justify-center gap-4 text-xs text-zinc-400 font-medium">
+                        <span className="flex items-center gap-1">
+                          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                          <InlineEditableText
+                            value={page.hero.ctaSubtext || ""}
+                            onChange={(newVal) =>
+                              updateP((p) => ({ ...p, hero: { ...p.hero, ctaSubtext: newVal } }))
+                            }
+                            isEditorPreview={isEditorPreview}
+                            tag="span"
+                            placeholder="Micro-copy..."
+                          />
+                        </span>
+                      </div>
+                    )}
                   </DraggableElement>
 
                   {/* Large Showcase Card with HeroMediaCard and Embedded Bottom Metrics */}
                   <div className="w-full flex flex-col items-center">
                     <HeroMediaCard
                       hero={page.hero}
+                      theme={page.theme}
                       onUpdateHero={(updated) =>
                         updateP((p) => ({
                           ...p,
@@ -2562,6 +2692,8 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                     }}
                     variant="outline"
                     defaultIcon="arrow"
+                    accentColor={page.accentColor}
+                    customAccentHex={page.customAccentHex}
                     nicheContext={page.niche}
                   />
 
@@ -2574,6 +2706,743 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                     <span>HARWINN GAZETTE</span>
                     <span>•</span>
                     <span>SANTA SOLANA POST</span>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ========================================================================= */}
+            {/* MODEL 7: MINIMAL GLOW & DIRECT HEADLINE FOCUS                             */}
+            {/* ========================================================================= */}
+            {currentHeroModel === "minimal_glow" && (() => {
+              const heroAlign = page.hero.align || "center";
+              const headlineAlign = page.hero.headlineAlign || heroAlign;
+              const subheadlineAlign = page.hero.subheadlineAlign || heroAlign;
+
+              return (
+                <div className={`flex flex-col ${getAlignClass(heroAlign)} max-w-4xl mx-auto text-center py-6 sm:py-10 space-y-6 sm:space-y-8`}>
+                  {/* Glowing Top Badge */}
+                  <div
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${
+                      page.theme === "light"
+                        ? "bg-purple-50 border border-purple-200 text-purple-700 shadow-sm"
+                        : "bg-zinc-900/90 backdrop-blur-md border border-purple-500/40 text-purple-300 shadow-xl shadow-purple-950/40"
+                    }`}
+                  >
+                    <Sparkles className="w-4 h-4 text-purple-500 animate-pulse" />
+                    <InlineEditableText
+                      value={page.hero.badgeText || "MÉTODO VALIDADO & EXCLUSIVO"}
+                      onChange={(newVal) =>
+                        updateP((p) => ({ ...p, hero: { ...p.hero, badgeText: newVal } }))
+                      }
+                      isEditorPreview={isEditorPreview}
+                      tag="span"
+                      className="text-xs sm:text-sm font-extrabold tracking-wide"
+                    />
+                  </div>
+
+                  {/* Headline */}
+                  <div
+                    className={`font-black ${getHeadlineSizeClass(
+                      page.hero.headlineSize
+                    )} ${getHeadingAlignClass(headlineAlign)} leading-[1.08] tracking-tight ${
+                      page.theme === "light" ? "text-zinc-950" : "text-white"
+                    } w-full`}
+                    style={{
+                      fontSize: page.hero.headlineFontSizePx ? `${page.hero.headlineFontSizePx}px` : undefined,
+                    }}
+                  >
+                    <InlineEditableText
+                      value={page.hero.headline || "Acelere Seus Resultados com Estratégia de Alto Impacto"}
+                      onChange={(newVal) =>
+                        updateP((p) => ({ ...p, hero: { ...p.hero, headline: newVal } }))
+                      }
+                      align={headlineAlign}
+                      onAlignChange={(newAlign) =>
+                        updateP((p) => ({
+                          ...p,
+                          hero: { ...p.hero, headlineAlign: newAlign, align: newAlign },
+                        }))
+                      }
+                      fontSize={page.hero.headlineSize || "base"}
+                      onFontSizeChange={(newSize) =>
+                        updateP((p) => ({ ...p, hero: { ...p.hero, headlineSize: newSize } }))
+                      }
+                      fontSizePx={page.hero.headlineFontSizePx}
+                      onFontSizePxChange={(newPx) =>
+                        updateP((p) => ({ ...p, hero: { ...p.hero, headlineFontSizePx: newPx } }))
+                      }
+                      isEditorPreview={isEditorPreview}
+                      tag="h1"
+                      multiline={true}
+                    />
+                  </div>
+
+                  {/* Subheadline */}
+                  <div
+                    className={`${
+                      page.theme === "light" ? "text-zinc-600 font-medium" : "text-zinc-400"
+                    } ${getSubheadlineSizeClass(
+                      page.hero.subheadlineSize
+                    )} ${getHeadingAlignClass(subheadlineAlign)} max-w-2xl mx-auto leading-relaxed`}
+                    style={{
+                      fontSize: page.hero.subheadlineFontSizePx ? `${page.hero.subheadlineFontSizePx}px` : undefined,
+                    }}
+                  >
+                    <InlineEditableText
+                      value={page.hero.subheadline || "Tudo o que você precisa para estruturar, escalar e converter com máxima eficiência e sem desperdício de tempo."}
+                      onChange={(newVal) =>
+                        updateP((p) => ({ ...p, hero: { ...p.hero, subheadline: newVal } }))
+                      }
+                      align={subheadlineAlign}
+                      onAlignChange={(newAlign) =>
+                        updateP((p) => ({ ...p, hero: { ...p.hero, subheadlineAlign: newAlign } }))
+                      }
+                      fontSize={page.hero.subheadlineSize || "base"}
+                      onFontSizeChange={(newSize) =>
+                        updateP((p) => ({ ...p, hero: { ...p.hero, subheadlineSize: newSize } }))
+                      }
+                      fontSizePx={page.hero.subheadlineFontSizePx}
+                      onFontSizePxChange={(newPx) =>
+                        updateP((p) => ({ ...p, hero: { ...p.hero, subheadlineFontSizePx: newPx } }))
+                      }
+                      isEditorPreview={isEditorPreview}
+                      tag="p"
+                      multiline={true}
+                    />
+                  </div>
+
+                  {/* Dual CTA Center */}
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 w-full max-w-md mx-auto">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!isEditorPreview) scrollToSection("form-section");
+                      }}
+                      className={`w-full sm:w-auto flex-1 py-4 px-8 rounded-2xl ${theme.ctaBg} hover:opacity-95 text-white font-extrabold text-base shadow-xl ${theme.ctaGlow} flex items-center justify-center gap-2 cursor-pointer transition-transform hover:scale-105`}
+                    >
+                      <Sparkles className="w-5 h-5 text-amber-300" />
+                      <InlineEditableText
+                        value={page.hero.ctaText || "Começar Agora"}
+                        onChange={(newVal) =>
+                          updateP((p) => ({ ...p, hero: { ...p.hero, ctaText: newVal } }))
+                        }
+                        isEditorPreview={isEditorPreview}
+                        tag="span"
+                      />
+                      <ArrowRight className="w-5 h-5" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!isEditorPreview) scrollToSection("bento-section");
+                      }}
+                      className={`w-full sm:w-auto py-4 px-6 rounded-2xl ${
+                        page.theme === "light"
+                          ? "bg-zinc-100 hover:bg-zinc-200 text-zinc-900 border border-zinc-300"
+                          : "bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 border border-zinc-700"
+                      } font-bold text-sm flex items-center justify-center gap-2 cursor-pointer transition-colors`}
+                    >
+                      <span>Conhecer Estrutura</span>
+                    </button>
+                  </div>
+
+                  {/* Trust Rating & Social Proof Mini-Row */}
+                  <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 pt-4 text-xs">
+                    <div className="flex items-center gap-1.5 text-amber-400 font-bold">
+                      <span>★★★★★</span>
+                      <span className={page.theme === "light" ? "text-zinc-800" : "text-zinc-300"}>4.9/5 (500+ Avaliações)</span>
+                    </div>
+                    <span className={page.theme === "light" ? "text-zinc-300" : "text-zinc-700"}>•</span>
+                    <div className="flex items-center gap-1.5 text-emerald-500 font-bold">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Garantia Incondicional de 7 Dias</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ========================================================================= */}
+            {/* MODEL 8: URGENCY COUNTER & SCARCITY HERO                                  */}
+            {/* ========================================================================= */}
+            {currentHeroModel === "urgency_counter" && (() => {
+              const heroAlign = page.hero.align || "center";
+              const headlineAlign = page.hero.headlineAlign || heroAlign;
+              const subheadlineAlign = page.hero.subheadlineAlign || heroAlign;
+
+              return (
+                <div className={`flex flex-col ${getAlignClass(heroAlign)} max-w-4xl mx-auto text-center py-6 sm:py-10 space-y-6`}>
+                  {/* Urgent Flashing Scarcity Header */}
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-600/20 border border-rose-500 text-rose-400 text-xs sm:text-sm font-extrabold animate-pulse">
+                    <Zap className="w-4 h-4 text-amber-300" />
+                    <InlineEditableText
+                      value={page.hero.badgeText || "⚡ OFERTA RELÂMPAGO POR TEMPO LIMITADO"}
+                      onChange={(newVal) =>
+                        updateP((p) => ({ ...p, hero: { ...p.hero, badgeText: newVal } }))
+                      }
+                      isEditorPreview={isEditorPreview}
+                      tag="span"
+                    />
+                  </div>
+
+                  {/* Scarcity Countdown Boxes */}
+                  <div className="p-4 sm:p-6 rounded-3xl bg-zinc-950/90 border border-amber-500/50 shadow-2xl max-w-lg mx-auto w-full space-y-3">
+                    <p className="text-xs uppercase tracking-widest text-amber-400 font-extrabold flex items-center justify-center gap-1.5">
+                      <Calendar className="w-4 h-4" />
+                      <span>O DESCONTO ESPECIAL ENCERRA EM:</span>
+                    </p>
+                    <div className="grid grid-cols-4 gap-2 text-center">
+                      <div className="p-2.5 rounded-2xl bg-zinc-900 border border-zinc-800">
+                        <span className="block text-xl sm:text-2xl font-black text-white">00</span>
+                        <span className="text-[10px] uppercase text-zinc-400 font-bold">Dias</span>
+                      </div>
+                      <div className="p-2.5 rounded-2xl bg-zinc-900 border border-zinc-800">
+                        <span className="block text-xl sm:text-2xl font-black text-white">05</span>
+                        <span className="text-[10px] uppercase text-zinc-400 font-bold">Horas</span>
+                      </div>
+                      <div className="p-2.5 rounded-2xl bg-zinc-900 border border-zinc-800">
+                        <span className="block text-xl sm:text-2xl font-black text-amber-400">42</span>
+                        <span className="text-[10px] uppercase text-zinc-400 font-bold">Minutos</span>
+                      </div>
+                      <div className="p-2.5 rounded-2xl bg-zinc-900 border border-zinc-800">
+                        <span className="block text-xl sm:text-2xl font-black text-rose-500 animate-pulse">19</span>
+                        <span className="text-[10px] uppercase text-zinc-400 font-bold">Segundos</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Headline */}
+                  <div
+                    className={`font-black ${getHeadlineSizeClass(
+                      page.hero.headlineSize
+                    )} ${getHeadingAlignClass(headlineAlign)} leading-[1.08] tracking-tight ${
+                      page.theme === "light" ? "text-zinc-950" : "text-white"
+                    } w-full`}
+                    style={{
+                      fontSize: page.hero.headlineFontSizePx ? `${page.hero.headlineFontSizePx}px` : undefined,
+                    }}
+                  >
+                    <InlineEditableText
+                      value={page.hero.headline || "Garanta Sua Vaga no Lote Promocional com 60% de Desconto"}
+                      onChange={(newVal) =>
+                        updateP((p) => ({ ...p, hero: { ...p.hero, headline: newVal } }))
+                      }
+                      align={headlineAlign}
+                      onAlignChange={(newAlign) =>
+                        updateP((p) => ({
+                          ...p,
+                          hero: { ...p.hero, headlineAlign: newAlign, align: newAlign },
+                        }))
+                      }
+                      fontSize={page.hero.headlineSize || "base"}
+                      onFontSizeChange={(newSize) =>
+                        updateP((p) => ({ ...p, hero: { ...p.hero, headlineSize: newSize } }))
+                      }
+                      fontSizePx={page.hero.headlineFontSizePx}
+                      onFontSizePxChange={(newPx) =>
+                        updateP((p) => ({ ...p, hero: { ...p.hero, headlineFontSizePx: newPx } }))
+                      }
+                      isEditorPreview={isEditorPreview}
+                      tag="h1"
+                      multiline={true}
+                    />
+                  </div>
+
+                  {/* Subheadline */}
+                  <div
+                    className={`${
+                      page.theme === "light" ? "text-zinc-600 font-medium" : "text-zinc-400"
+                    } ${getSubheadlineSizeClass(
+                      page.hero.subheadlineSize
+                    )} ${getHeadingAlignClass(subheadlineAlign)} max-w-2xl mx-auto leading-relaxed`}
+                    style={{
+                      fontSize: page.hero.subheadlineFontSizePx ? `${page.hero.subheadlineFontSizePx}px` : undefined,
+                    }}
+                  >
+                    <InlineEditableText
+                      value={page.hero.subheadline || "Acesso vitalício, todos os bônus inclusos e garantia blindada. Condição exclusiva para os próximos 10 inscritos."}
+                      onChange={(newVal) =>
+                        updateP((p) => ({ ...p, hero: { ...p.hero, subheadline: newVal } }))
+                      }
+                      align={subheadlineAlign}
+                      onAlignChange={(newAlign) =>
+                        updateP((p) => ({ ...p, hero: { ...p.hero, subheadlineAlign: newAlign } }))
+                      }
+                      fontSize={page.hero.subheadlineSize || "base"}
+                      onFontSizeChange={(newSize) =>
+                        updateP((p) => ({ ...p, hero: { ...p.hero, subheadlineSize: newSize } }))
+                      }
+                      fontSizePx={page.hero.subheadlineFontSizePx}
+                      onFontSizePxChange={(newPx) =>
+                        updateP((p) => ({ ...p, hero: { ...p.hero, subheadlineFontSizePx: newPx } }))
+                      }
+                      isEditorPreview={isEditorPreview}
+                      tag="p"
+                      multiline={true}
+                    />
+                  </div>
+
+                  {/* Urgency Progress Bar */}
+                  <div className="max-w-md mx-auto w-full space-y-1.5">
+                    <div className="flex justify-between text-xs font-bold">
+                      <span className={page.theme === "light" ? "text-zinc-700" : "text-zinc-300"}>Vagas Preenchidas: 93%</span>
+                      <span className="text-rose-500 font-extrabold animate-pulse">Apenas 7 vagas restantes!</span>
+                    </div>
+                    <div className="w-full h-3 rounded-full bg-zinc-800 overflow-hidden p-0.5 border border-zinc-700">
+                      <div className="w-[93%] h-full rounded-full bg-gradient-to-r from-amber-500 to-rose-500 shadow-lg shadow-rose-500/50" />
+                    </div>
+                  </div>
+
+                  {/* CTA Button */}
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!isEditorPreview) scrollToSection("form-section");
+                      }}
+                      className={`w-full max-w-md mx-auto py-5 px-8 rounded-2xl ${theme.ctaBg} hover:opacity-95 text-white font-black text-base sm:text-lg shadow-2xl ${theme.ctaGlow} flex items-center justify-center gap-2 cursor-pointer transition-transform hover:scale-105 animate-bounce`}
+                    >
+                      <Sparkles className="w-5 h-5 text-amber-300" />
+                      <InlineEditableText
+                        value={page.hero.ctaText || "GARANTIR MINHA VAGA COM 60% OFF"}
+                        onChange={(newVal) =>
+                          updateP((p) => ({ ...p, hero: { ...p.hero, ctaText: newVal } }))
+                        }
+                        isEditorPreview={isEditorPreview}
+                        tag="span"
+                      />
+                      <ArrowRight className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ========================================================================= */}
+            {/* MODEL 9: TEMA WHITE PRO (CLEAN HIGH-TICKET COM CARD DE PROVA SOCIAL)     */}
+            {/* ========================================================================= */}
+            {currentHeroModel === "white_pro" && (() => {
+              const heroAlign = page.hero.align || "left";
+              const headlineAlign = page.hero.headlineAlign || heroAlign;
+              const subheadlineAlign = page.hero.subheadlineAlign || heroAlign;
+              const isMediaLeft = page.hero.mediaPosition === "left";
+
+              const textBlock = (
+                <div className={`flex flex-col ${getAlignClass(heroAlign)} flex-1 w-full space-y-6`}>
+                  {/* Badge Tag */}
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 border border-zinc-200 text-zinc-800 text-xs sm:text-sm font-semibold shadow-sm">
+                    <span className="w-2 h-2 rounded-full bg-purple-600 animate-ping" />
+                    <DynamicIcon name={page.hero.badgeIcon || "Sparkles"} className="w-4 h-4 text-purple-600" />
+                    <InlineEditableText
+                      value={page.hero.badgeText || "White Pro • Estrutura de Alta Conversão"}
+                      onChange={(newVal) =>
+                        updateP((p) => ({ ...p, hero: { ...p.hero, badgeText: newVal } }))
+                      }
+                      isEditorPreview={isEditorPreview}
+                      tag="span"
+                      className="text-zinc-900 font-bold"
+                      placeholder="Texto do Badge..."
+                    />
+                  </div>
+
+                  {/* Headline */}
+                  <div
+                    className={`font-black ${getHeadlineSizeClass(
+                      page.hero.headlineSize
+                    )} ${getHeadingAlignClass(headlineAlign)} leading-[1.1] tracking-tight text-zinc-950 w-full`}
+                    style={{
+                      fontSize: page.hero.headlineFontSizePx ? `${page.hero.headlineFontSizePx}px` : undefined,
+                    }}
+                  >
+                    <InlineEditableText
+                      value={page.hero.headline || "Transforme Visitantes Anônimos em Clientes Frequentes de Alto Ticket"}
+                      onChange={(newVal) =>
+                        updateP((p) => ({ ...p, hero: { ...p.hero, headline: newVal } }))
+                      }
+                      align={headlineAlign}
+                      fontSize={page.hero.headlineSize || "base"}
+                      isEditorPreview={isEditorPreview}
+                      tag="h1"
+                      multiline={true}
+                      placeholder="Headline principal..."
+                    />
+                  </div>
+
+                  {/* Subheadline */}
+                  <div
+                    className={`text-zinc-600 ${getSubheadlineSizeClass(
+                      page.hero.subheadlineSize
+                    )} ${getHeadingAlignClass(subheadlineAlign)} leading-relaxed font-normal w-full max-w-2xl`}
+                    style={{
+                      fontSize: page.hero.subheadlineFontSizePx ? `${page.hero.subheadlineFontSizePx}px` : undefined,
+                    }}
+                  >
+                    <InlineEditableText
+                      value={page.hero.subheadline || "Um ecossistema clean, rápido e otimizado com design minimalista de alta performance. Desenvolvido para marcas que prezam por autoridade."}
+                      onChange={(newVal) =>
+                        updateP((p) => ({ ...p, hero: { ...p.hero, subheadline: newVal } }))
+                      }
+                      align={subheadlineAlign}
+                      fontSize={page.hero.subheadlineSize || "base"}
+                      isEditorPreview={isEditorPreview}
+                      tag="p"
+                      multiline={true}
+                    />
+                  </div>
+
+                  {/* CTA Buttons Row */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full max-w-md pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!isEditorPreview) scrollToSection("form-section");
+                      }}
+                      className="flex-1 py-4 px-8 rounded-2xl bg-zinc-950 hover:bg-zinc-800 text-white font-extrabold text-sm sm:text-base shadow-xl flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.02]"
+                    >
+                      <Sparkles className="w-4 h-4 text-amber-400" />
+                      <InlineEditableText
+                        value={page.hero.ctaText || "ACESSAR AGORA"}
+                        onChange={(newVal) =>
+                          updateP((p) => ({ ...p, hero: { ...p.hero, ctaText: newVal } }))
+                        }
+                        isEditorPreview={isEditorPreview}
+                        tag="span"
+                      />
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!isEditorPreview) scrollToSection("quiz-section");
+                      }}
+                      className="py-4 px-6 rounded-2xl bg-zinc-100 hover:bg-zinc-200 text-zinc-900 border border-zinc-300 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                    >
+                      <span>Fazer Diagnóstico</span>
+                    </button>
+                  </div>
+
+                  {/* Micro proof check items */}
+                  <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-zinc-700 pt-2">
+                    <div className="flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-purple-600" />
+                      <span>Design White Pro 100% Responsivo</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-purple-600" />
+                      <span>Carregamento Ultra-Rápido</span>
+                    </div>
+                  </div>
+                </div>
+              );
+
+              const cardBlock = (
+                <div className="w-full lg:w-[460px] flex flex-col gap-4">
+                  <div className="p-6 rounded-3xl bg-white border border-zinc-200/90 shadow-2xl shadow-zinc-200/80 space-y-5">
+                    <HeroMediaCard
+                      hero={page.hero}
+                      onUpdateHero={(updated) =>
+                        updateP((p) => ({
+                          ...p,
+                          hero: {
+                            ...p.hero,
+                            ...(typeof updated === "function" ? updated(p.hero) : updated),
+                          },
+                        }))
+                      }
+                      isEditorPreview={isEditorPreview}
+                      themeGlow="shadow-purple-500/10"
+                      onOpenImagePicker={onOpenImagePicker}
+                    />
+
+                    {/* Authority Card Info */}
+                    <div className="pt-2 border-t border-zinc-100 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-10 h-10 rounded-full bg-purple-100 border border-purple-200 flex items-center justify-center font-bold text-purple-700 text-sm">
+                            ★
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-zinc-900">4.9/5 Nota de Excelência</p>
+                            <p className="text-[11px] text-zinc-500">Base auditada de membros VIP</p>
+                          </div>
+                        </div>
+                        <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold text-xs border border-emerald-200">
+                          100% Verificado
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+
+              return (
+                <div className="p-6 sm:p-12 rounded-3xl bg-white border border-zinc-200 shadow-xl my-4">
+                  <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12 w-full">
+                    {isMediaLeft ? (
+                      <>
+                        {cardBlock}
+                        {textBlock}
+                      </>
+                    ) : (
+                      <>
+                        {textBlock}
+                        {cardBlock}
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ========================================================================= */}
+            {/* MODEL 10: FULLSCREEN SLIDESHOW (IMAGENS EM SLIDE COM CONTROLE DE TEMPO)    */}
+            {/* ========================================================================= */}
+            {currentHeroModel === "fullscreen_slideshow" && (() => {
+              const currentImage = slideshowImages[currentSlideIndex % slideshowImages.length];
+              const overlayOpacity = (page.hero.slideshowOverlayOpacity ?? 55) / 100;
+
+              return (
+                <div className="relative w-full rounded-3xl overflow-hidden min-h-[600px] sm:min-h-[750px] flex flex-col justify-between p-6 sm:p-12 text-white border border-zinc-800 shadow-2xl transition-all duration-700 bg-zinc-950">
+                  {/* Slide Image Backdrop with Smooth Transition */}
+                  <div
+                    className="absolute inset-0 bg-cover bg-center transition-all duration-1000 transform scale-105"
+                    style={{ backgroundImage: `url('${currentImage}')` }}
+                  />
+                  {/* Overlay Scrim */}
+                  <div
+                    className="absolute inset-0 bg-black transition-opacity duration-300"
+                    style={{ opacity: overlayOpacity }}
+                  />
+
+                  {/* Top Bar: Configuration Card & Autoplay Status in Editor Preview */}
+                  <div className="relative z-20 flex flex-wrap items-center justify-between gap-3 w-full pb-4">
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-xs font-bold text-white shadow-xl">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span>Slide {currentSlideIndex + 1} de {slideshowImages.length}</span>
+                      <span className="text-zinc-400">•</span>
+                      <span className="text-purple-300">{slideIntervalSec}s por slide</span>
+                    </div>
+
+                    {/* Slideshow Control Toolbar in Editor */}
+                    {isEditorPreview && (
+                      <div className="flex flex-wrap items-center gap-2 bg-zinc-900/95 backdrop-blur-xl border border-purple-500/60 p-2 rounded-2xl shadow-2xl text-xs">
+                        <span className="font-extrabold text-purple-300 px-2 flex items-center gap-1">
+                          <Sliders className="w-3.5 h-3.5 text-purple-400" />
+                          <span>Tempo do Slide:</span>
+                        </span>
+
+                        {/* Interval selector buttons: 1s, 3s, 5s, 8s */}
+                        {[1, 3, 5, 8, 10].map((sec) => (
+                          <button
+                            key={sec}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              updateP((p) => ({
+                                ...p,
+                                hero: { ...p.hero, slideshowIntervalSeconds: sec },
+                              }));
+                            }}
+                            className={`px-2.5 py-1 rounded-xl font-bold cursor-pointer transition-all ${
+                              slideIntervalSec === sec
+                                ? "bg-purple-600 text-white shadow"
+                                : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                            }`}
+                          >
+                            {sec}s
+                          </button>
+                        ))}
+
+                        <div className="h-4 w-px bg-zinc-700 mx-1" />
+
+                        {/* Opacity selector */}
+                        <span className="font-semibold text-zinc-400 px-1">Escurecer:</span>
+                        {[30, 50, 70].map((op) => (
+                          <button
+                            key={op}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              updateP((p) => ({
+                                ...p,
+                                hero: { ...p.hero, slideshowOverlayOpacity: op },
+                              }));
+                            }}
+                            className={`px-2 py-0.5 rounded-lg text-[11px] font-bold cursor-pointer transition-all ${
+                              (page.hero.slideshowOverlayOpacity ?? 55) === op
+                                ? "bg-purple-600 text-white"
+                                : "bg-zinc-800 text-zinc-400 hover:text-white"
+                            }`}
+                          >
+                            {op}%
+                          </button>
+                        ))}
+
+                        <div className="h-4 w-px bg-zinc-700 mx-1" />
+
+                        {/* Add Image Button */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onOpenImagePicker) {
+                              onOpenImagePicker({
+                                type: "hero",
+                                currentUrl: currentImage,
+                                title: "Adicionar Imagem ao Slideshow",
+                              });
+                            } else {
+                              const url = prompt("Insira a URL da nova imagem do slide:");
+                              if (url) {
+                                updateP((p) => ({
+                                  ...p,
+                                  hero: {
+                                    ...p.hero,
+                                    slideshowImages: [...slideshowImages, url],
+                                  },
+                                }));
+                              }
+                            }
+                          }}
+                          className="px-2.5 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                          title="Adicionar Foto"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>+ Foto</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Center Content Box */}
+                  <div className="relative z-20 my-auto max-w-3xl mx-auto text-center space-y-6">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-xs sm:text-sm font-semibold shadow-2xl">
+                      <Sparkles className="w-4 h-4 text-amber-300" />
+                      <InlineEditableText
+                        value={page.hero.badgeText || "Experiência Imersiva em Slide"}
+                        onChange={(newVal) =>
+                          updateP((p) => ({ ...p, hero: { ...p.hero, badgeText: newVal } }))
+                        }
+                        isEditorPreview={isEditorPreview}
+                        tag="span"
+                        className="text-white font-bold"
+                      />
+                    </div>
+
+                    <div
+                      className={`font-black ${getHeadlineSizeClass(
+                        page.hero.headlineSize
+                      )} text-center leading-[1.1] tracking-tight text-white drop-shadow-2xl w-full`}
+                      style={{
+                        fontSize: page.hero.headlineFontSizePx ? `${page.hero.headlineFontSizePx}px` : undefined,
+                      }}
+                    >
+                      <InlineEditableText
+                        value={page.hero.headline || "Apresente Seu Projeto em Tela Cheia com Máximo Impacto Visual"}
+                        onChange={(newVal) =>
+                          updateP((p) => ({ ...p, hero: { ...p.hero, headline: newVal } }))
+                        }
+                        align="center"
+                        fontSize={page.hero.headlineSize || "base"}
+                        isEditorPreview={isEditorPreview}
+                        tag="h1"
+                        multiline={true}
+                        placeholder="Título do Slideshow..."
+                      />
+                    </div>
+
+                    <div
+                      className={`text-zinc-200 ${getSubheadlineSizeClass(
+                        page.hero.subheadlineSize
+                      )} text-center leading-relaxed font-normal max-w-2xl mx-auto drop-shadow`}
+                      style={{
+                        fontSize: page.hero.subheadlineFontSizePx ? `${page.hero.subheadlineFontSizePx}px` : undefined,
+                      }}
+                    >
+                      <InlineEditableText
+                        value={page.hero.subheadline || "Fotografia de alta definição, transição suave programada e layout responsivo. Ideal para marcas focadas no poder da imagem."}
+                        onChange={(newVal) =>
+                          updateP((p) => ({ ...p, hero: { ...p.hero, subheadline: newVal } }))
+                        }
+                        align="center"
+                        fontSize={page.hero.subheadlineSize || "base"}
+                        isEditorPreview={isEditorPreview}
+                        tag="p"
+                        multiline={true}
+                      />
+                    </div>
+
+                    <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!isEditorPreview) scrollToSection("form-section");
+                        }}
+                        className={`w-full sm:w-auto py-5 px-10 rounded-2xl ${theme.ctaBg} hover:opacity-95 text-white font-black text-base shadow-2xl ${theme.ctaGlow} flex items-center justify-center gap-2 cursor-pointer transition-transform hover:scale-105`}
+                      >
+                        <Sparkles className="w-5 h-5 text-amber-300" />
+                        <InlineEditableText
+                          value={page.hero.ctaText || "GARANTIR MINHA VAGA"}
+                          onChange={(newVal) =>
+                            updateP((p) => ({ ...p, hero: { ...p.hero, ctaText: newVal } }))
+                          }
+                          isEditorPreview={isEditorPreview}
+                          tag="span"
+                        />
+                        <ArrowRight className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Bottom Navigation Dots & Manual Slide Arrows */}
+                  <div className="relative z-20 flex items-center justify-between w-full pt-6">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentSlideIndex((prev) =>
+                          prev === 0 ? slideshowImages.length - 1 : prev - 1
+                        );
+                      }}
+                      className="p-3 rounded-full bg-black/60 hover:bg-black/90 text-white border border-white/20 transition-all cursor-pointer hover:scale-110"
+                      title="Slide Anterior"
+                    >
+                      <MoveLeft className="w-5 h-5" />
+                    </button>
+
+                    {/* Dots indicator */}
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/60 border border-white/20 backdrop-blur-md">
+                      {slideshowImages.map((_, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentSlideIndex(idx);
+                          }}
+                          className={`h-2.5 rounded-full transition-all cursor-pointer ${
+                            currentSlideIndex % slideshowImages.length === idx
+                              ? "w-8 bg-purple-500"
+                              : "w-2.5 bg-zinc-500 hover:bg-zinc-300"
+                          }`}
+                        />
+                      ))}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentSlideIndex((prev) => (prev + 1) % slideshowImages.length);
+                      }}
+                      className="p-3 rounded-full bg-black/60 hover:bg-black/90 text-white border border-white/20 transition-all cursor-pointer hover:scale-110"
+                      title="Próximo Slide"
+                    >
+                      <MoveRight className="w-5 h-5" />
+                    </button>
                   </div>
                 </div>
               );
@@ -2655,26 +3524,81 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
               />
             </div>
 
-            {/* Logo Marquee */}
-            <div className="relative overflow-hidden py-4 mb-14 border-y border-zinc-800/60 bg-zinc-950/40 rounded-2xl">
-              <div className="flex items-center justify-around gap-8 flex-wrap px-4">
-                {(() => {
+            {/* Animated Infinite Logo Marquee */}
+            <div className={`relative overflow-hidden py-4 mb-14 border-y rounded-2xl mask-gradient ${
+              page.theme === "light"
+                ? "border-zinc-200/80 bg-zinc-100/50"
+                : "border-zinc-800/60 bg-zinc-950/40"
+            }`}>
+              {(() => {
+                const logoSizeKey = page.socialProof.logoSize || "sm";
+                const imgHeightClass =
+                  logoSizeKey === "xs"
+                    ? "h-5 sm:h-6"
+                    : logoSizeKey === "md"
+                    ? "h-10 sm:h-12"
+                    : logoSizeKey === "lg"
+                    ? "h-14 sm:h-16"
+                    : logoSizeKey === "xl"
+                    ? "h-20 sm:h-24"
+                    : "h-7 sm:h-8";
+
+                const iconSizeClass =
+                  logoSizeKey === "xs"
+                    ? "w-3.5 h-3.5"
+                    : logoSizeKey === "md"
+                    ? "w-6 h-6"
+                    : logoSizeKey === "lg"
+                    ? "w-8 h-8"
+                    : logoSizeKey === "xl"
+                    ? "w-10 h-10"
+                    : "w-4.5 h-4.5";
+
+                const textSizeClass =
+                  logoSizeKey === "xs"
+                    ? "text-xs"
+                    : logoSizeKey === "md"
+                    ? "text-base sm:text-lg font-extrabold"
+                    : logoSizeKey === "lg"
+                    ? "text-xl sm:text-2xl font-extrabold"
+                    : logoSizeKey === "xl"
+                    ? "text-2xl sm:text-3xl font-black"
+                    : "text-sm sm:text-base font-bold";
+
+                const gapClass =
+                  logoSizeKey === "xs"
+                    ? "gap-6 sm:gap-8 pr-6 sm:pr-8"
+                    : logoSizeKey === "md"
+                    ? "gap-12 sm:gap-14 pr-12 sm:pr-14"
+                    : logoSizeKey === "lg"
+                    ? "gap-14 sm:gap-18 pr-14 sm:pr-18"
+                    : logoSizeKey === "xl"
+                    ? "gap-16 sm:gap-22 pr-16 sm:pr-22"
+                    : "gap-10 sm:gap-12 pr-10 sm:pr-12";
+
+                const renderLogosGroup = (keyPrefix: string) => {
                   const logoItems = page.socialProof.logoItems;
                   if (logoItems && logoItems.length > 0) {
-                    return logoItems.map((item, idx) => {
+                    // Ensure enough items to span screen width for seamless looping
+                    let expandedItems = [...logoItems];
+                    while (expandedItems.length < 8) {
+                      expandedItems = [...expandedItems, ...logoItems];
+                    }
+
+                    return expandedItems.map((item, idx) => {
                       const mode = item.colorMode || page.socialProof.logoColorMode || "accent";
                       if (item.type === "image" && item.imageUrl) {
                         return (
-                          <div key={item.id || idx} className="flex items-center gap-2 py-1">
+                          <div key={`${keyPrefix}-${item.id || idx}-${idx}`} className="flex items-center gap-2 py-1 shrink-0">
                             <img
                               src={item.imageUrl}
                               alt={item.text}
-                              className={`h-8 sm:h-10 w-auto object-contain transition-all ${
+                              className={`${imgHeightClass} w-auto object-contain transition-all ${
                                 mode === "original"
                                   ? "filter opacity-90 hover:opacity-100"
                                   : mode === "monochrome"
-                                  ? "filter grayscale contrast-200 brightness-200 opacity-80"
-                                  : "filter brightness-200 contrast-125 opacity-90"
+                                  ? (page.theme === "light" ? "filter grayscale brightness-0 contrast-150 opacity-60 hover:opacity-80" : "filter grayscale contrast-200 brightness-200 opacity-80")
+                                  : (page.theme === "light" ? "filter contrast-125 opacity-90" : "filter brightness-200 contrast-125 opacity-90")
                               }`}
                             />
                           </div>
@@ -2682,8 +3606,8 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                       }
                       return (
                         <div
-                          key={item.id || idx}
-                          className={`flex items-center gap-2 transition-all duration-300 py-1 ${
+                          key={`${keyPrefix}-${item.id || idx}-${idx}`}
+                          className={`flex items-center gap-2 transition-all duration-300 py-1 shrink-0 ${
                             mode === "accent"
                               ? `opacity-80 hover:opacity-100 ${theme.iconText}`
                               : mode === "monochrome"
@@ -2691,8 +3615,8 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                               : "opacity-80 hover:opacity-100 text-zinc-200"
                           }`}
                         >
-                          <DynamicIcon name="Building" className="w-5 h-5" />
-                          <span className="font-bold text-sm sm:text-base tracking-tight">
+                          <DynamicIcon name="Building" className={iconSizeClass} />
+                          <span className={`${textSizeClass} tracking-tight whitespace-nowrap`}>
                             {item.text}
                           </span>
                         </div>
@@ -2705,23 +3629,39 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                       ? page.socialProof.marqueeLogos
                       : POPULAR_LOGO_PRESETS.map((p) => p.name).slice(0, 6);
 
-                  return rawLogos.map((logoName, idx) => (
+                  let expandedRaw = [...rawLogos];
+                  while (expandedRaw.length < 8) {
+                    expandedRaw = [...expandedRaw, ...rawLogos];
+                  }
+
+                  return expandedRaw.map((logoName, idx) => (
                     <div
-                      key={idx}
-                      className={`flex items-center gap-2 transition-all duration-300 py-1 ${
+                      key={`${keyPrefix}-${idx}`}
+                      className={`flex items-center gap-2 transition-all duration-300 py-1 shrink-0 ${
                         (page.socialProof.logoColorMode || "original") === "accent"
                           ? `opacity-80 hover:opacity-100 ${theme.iconText}`
                           : "opacity-70 hover:opacity-100 text-zinc-300"
                       }`}
                     >
-                      <DynamicIcon name="Building" className="w-5 h-5" />
-                      <span className="font-bold text-sm sm:text-base tracking-tight">
+                      <DynamicIcon name="Building" className={iconSizeClass} />
+                      <span className={`${textSizeClass} tracking-tight whitespace-nowrap`}>
                         {logoName}
                       </span>
                     </div>
                   ));
-                })()}
-              </div>
+                };
+
+                return (
+                  <div className="flex w-max animate-marquee items-center select-none">
+                    <div className={`flex items-center ${gapClass} shrink-0`}>
+                      {renderLogosGroup("t1")}
+                    </div>
+                    <div className={`flex items-center ${gapClass} shrink-0`} aria-hidden="true">
+                      {renderLogosGroup("t2")}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Numerical Proof Metric Cards */}
@@ -2731,9 +3671,13 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                   key={metric.id || idx}
                   className={`${getPaddingClass(page.socialProof.cardPadding)} ${getRadiusClass(
                     page.socialProof.cardRadius
-                  )} bg-zinc-900/60 border border-zinc-800/80 backdrop-blur-md relative group/card flex flex-col justify-between hover:border-purple-500/40 transition-all ${getAlignClass(
+                  )} ${getThemeCardBgClass(page.accentColor, page.theme)} relative group/card flex flex-col justify-between hover:border-purple-500/40 transition-all ${getAlignClass(
                     page.socialProof.align
                   )}`}
+                  style={page.theme === "light" && page.customAccentHex ? {
+                    backgroundColor: `${page.customAccentHex}10`,
+                    borderColor: `${page.customAccentHex}35`
+                  } : undefined}
                 >
                   {/* Metric Action Controls in Editor */}
                   {isEditorPreview && (
@@ -2822,7 +3766,12 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                     </div>
                   )}
 
-                  <div className={`text-2xl sm:text-3xl font-extrabold ${theme.headingGradient} mb-1`}>
+                  <div
+                    className={`text-2xl sm:text-3xl font-extrabold mb-1 ${
+                      page.theme === "light" ? "font-black" : theme.headingGradient || "text-white"
+                    }`}
+                    style={page.theme === "light" ? { color: page.customAccentHex || theme.primaryHex } : undefined}
+                  >
                     <InlineEditableText
                       value={metric.value}
                       onChange={(newVal) =>
@@ -2838,7 +3787,7 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                     />
                   </div>
 
-                  <div className="text-xs sm:text-sm font-semibold text-zinc-200 mb-0.5">
+                  <div className={`text-xs sm:text-sm font-semibold mb-0.5 ${page.theme === "light" ? "text-zinc-950" : "text-zinc-200"}`}>
                     <InlineEditableText
                       value={metric.label}
                       onChange={(newVal) =>
@@ -2855,7 +3804,7 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                   </div>
 
                   {metric.sublabel && (
-                    <div className="text-[11px] text-zinc-500">
+                    <div className={`text-[11px] ${page.theme === "light" ? "text-zinc-700" : "text-zinc-500"}`}>
                       <InlineEditableText
                         value={metric.sublabel}
                         onChange={(newVal) =>
@@ -2975,7 +3924,7 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                     className="px-2.5 py-1 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-[11px] font-bold flex items-center gap-1 cursor-pointer shadow"
                   >
                     <Plus className="w-3 h-3" />
-                    + Nova Pergunta
+                    <span>+ Pergunta</span>
                   </button>
                 }
               />
@@ -2983,12 +3932,18 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
 
             {/* Quiz Title & Subtitle */}
             <div className={`mb-10 ${getHeadingAlignClass(page.quiz.align)}`}>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-xs font-semibold text-amber-400 mb-3">
+              <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mb-3 ${
+                page.theme === "light"
+                  ? "bg-amber-100 border border-amber-200 text-amber-700"
+                  : "bg-zinc-900 border border-zinc-800 text-amber-400"
+              }`}>
                 <Flame className="w-3.5 h-3.5" />
                 <span>DIAGNÓSTICO ESTRATÉGICO PERSONALIZADO</span>
               </div>
 
-              <div className="text-2xl sm:text-4xl font-extrabold text-white mb-3">
+              <div className={`text-2xl sm:text-4xl font-extrabold mb-3 ${
+                page.theme === "light" ? "text-zinc-900" : "text-white"
+              }`}>
                 <InlineEditableText
                   value={page.quiz.title || "Descubra o Plano Ideal Para o Seu Negócio"}
                   onChange={(newVal) =>
@@ -3001,7 +3956,9 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                 />
               </div>
 
-              <div className="text-zinc-400 text-sm sm:text-base max-w-2xl">
+              <div className={`text-sm sm:text-base max-w-2xl ${
+                page.theme === "light" ? "text-zinc-600" : "text-zinc-400"
+              }`}>
                 <InlineEditableText
                   value={page.quiz.subtitle || "Responda a perguntas rápidas para desbloquear sua condição exclusiva:"}
                   onChange={(newVal) =>
@@ -3085,11 +4042,19 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
             <div
               className={`max-w-2xl mx-auto ${getRadiusClass(page.quiz.cardRadius)} ${getPaddingClass(
                 page.quiz.cardPadding
-              )} bg-zinc-900/80 border border-zinc-800/90 backdrop-blur-xl shadow-2xl relative`}
+              )} ${
+                page.theme === "light"
+                  ? "bg-white border border-zinc-200 shadow-xl"
+                  : "bg-zinc-900/80 border border-zinc-800/90 backdrop-blur-xl shadow-2xl"
+              } relative`}
             >
               {/* Question counter & progress */}
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-zinc-800">
-                <span className="text-xs font-bold uppercase tracking-wider text-purple-400">
+              <div className={`flex items-center justify-between mb-6 pb-4 border-b ${
+                page.theme === "light" ? "border-zinc-100" : "border-zinc-800"
+              }`}>
+                <span className={`text-xs font-bold uppercase tracking-wider ${
+                  page.theme === "light" ? "text-purple-600" : "text-purple-400"
+                }`}>
                   Etapa {currentQuizStep + 1} de {page.quiz.questions.length}
                 </span>
                 <div className="flex gap-1.5">
@@ -3098,11 +4063,16 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                       key={idx}
                       className={`h-1.5 rounded-full transition-all duration-300 ${
                         idx === currentQuizStep
-                          ? "w-8 bg-purple-500"
+                          ? "w-8 shadow-sm"
                           : idx < currentQuizStep
-                          ? "w-4 bg-purple-900"
-                          : "w-4 bg-zinc-800"
+                          ? (page.theme === "light" ? "w-4 bg-zinc-300" : "w-4 bg-zinc-700")
+                          : (page.theme === "light" ? "w-4 bg-zinc-200" : "w-4 bg-zinc-800")
                       }`}
+                      style={
+                        idx === currentQuizStep
+                          ? { backgroundColor: page.customAccentHex || theme.primaryHex }
+                          : undefined
+                      }
                     />
                   ))}
                 </div>
@@ -3127,7 +4097,9 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
               </div>
 
               {currentQ.description && (
-                <div className="text-xs sm:text-sm text-zinc-400 mb-6">
+                <div className={`text-xs sm:text-sm mb-6 ${
+                  page.theme === "light" ? "text-zinc-600" : "text-zinc-400"
+                }`}>
                   <InlineEditableText
                     value={currentQ.description}
                     onChange={(newVal) =>
@@ -3154,18 +4126,28 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                       onClick={() => handleQuizOptionSelect(currentQ.id, opt, currentQuizStep)}
                       className={`p-4 rounded-2xl border transition-all relative group/opt flex items-center justify-between cursor-pointer ${
                         isSelected
-                          ? "bg-purple-950/60 border-purple-500 shadow-lg shadow-purple-950/50"
-                          : "bg-zinc-950/60 border-zinc-800/90 hover:border-zinc-700 hover:bg-zinc-900/40"
+                          ? (page.theme === "light"
+                              ? `${theme.badgeBg} ${theme.border} shadow-sm`
+                              : `bg-zinc-900/90 ${theme.border} shadow-lg`)
+                          : (page.theme === "light"
+                              ? "bg-white border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
+                              : "bg-zinc-950/60 border-zinc-800/90 hover:border-zinc-700 hover:bg-zinc-900/40")
                       }`}
                     >
                       <div className="flex items-center gap-3.5 flex-1 pr-2">
                         {opt.iconName && (
-                          <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-purple-400 flex-shrink-0">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                            page.theme === "light"
+                              ? `bg-zinc-100 border border-zinc-200 ${theme.iconText}`
+                              : `bg-zinc-900 border border-zinc-800 ${theme.iconText}`
+                          }`}>
                             <DynamicIcon name={opt.iconName} className="w-5 h-5" />
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <div className="font-bold text-sm sm:text-base text-white">
+                          <div className={`font-bold text-sm sm:text-base ${
+                            page.theme === "light" ? "text-zinc-950" : "text-white"
+                          }`}>
                             <InlineEditableText
                               value={opt.label}
                               onChange={(newVal) =>
@@ -3183,7 +4165,9 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                             />
                           </div>
                           {opt.description && (
-                            <div className="text-xs text-zinc-400 mt-0.5">
+                            <div className={`text-xs mt-0.5 ${
+                              page.theme === "light" ? "text-zinc-600" : "text-zinc-400"
+                            }`}>
                               <InlineEditableText
                                 value={opt.description}
                                 onChange={(newVal) =>
@@ -3207,7 +4191,11 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                       {/* Right: Badge and Editor Actions */}
                       <div className="flex items-center gap-2">
                         {opt.badge && (
-                          <span className="px-2.5 py-0.5 rounded-full bg-purple-950 border border-purple-500/40 text-purple-300 text-[10px] font-bold">
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                            page.theme === "light"
+                              ? "bg-purple-50 border-purple-200 text-purple-600"
+                              : "bg-purple-950 border border-purple-500/40 text-purple-300"
+                          }`}>
                             {opt.badge}
                           </span>
                         )}
@@ -3371,12 +4359,18 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
 
             {/* Header */}
             <div className={`mb-12 ${getHeadingAlignClass(page.bentoGrid.align)}`}>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-xs font-semibold text-purple-400 mb-3">
+              <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mb-3 ${
+                page.theme === "light"
+                  ? "bg-zinc-100 border border-zinc-200 text-zinc-800"
+                  : "bg-zinc-900 border border-zinc-800 text-purple-400"
+              }`}>
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>TECNOLOGIA & METODOLOGIA ÚNICA</span>
               </div>
 
-              <div className="text-2xl sm:text-4xl font-extrabold text-white mb-3">
+              <div className={`text-2xl sm:text-4xl font-extrabold mb-3 ${
+                page.theme === "light" ? "text-zinc-900" : "text-white"
+              }`}>
                 <InlineEditableText
                   value={page.bentoGrid.title || "Por Que Este Método Supera Qualquer Outro"}
                   onChange={(newVal) =>
@@ -3389,7 +4383,9 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                 />
               </div>
 
-              <div className="text-zinc-400 text-sm sm:text-base max-w-2xl">
+              <div className={`text-sm sm:text-base max-w-2xl ${
+                page.theme === "light" ? "text-zinc-600" : "text-zinc-400"
+              }`}>
                 <InlineEditableText
                   value={page.bentoGrid.subtitle || "Uma estrutura validada para gerar previsibilidade, autoridade e conversão máxima:"}
                   onChange={(newVal) =>
@@ -3430,7 +4426,7 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                     )} ${
                       item.customGradient
                         ? item.customGradient
-                        : "bg-zinc-900/60 border border-zinc-800/80 backdrop-blur-xl"
+                        : getThemeCardBgClass(page.accentColor, page.theme)
                     } flex flex-col justify-between relative group/bento hover:border-purple-500/50 hover:bg-zinc-900/80 transition-all cursor-pointer ${getBentoSizeClasses(
                       item.size
                     )} ${
@@ -3635,16 +4631,36 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                             });
                           }
                         }}
-                        className={`w-12 h-12 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-center ${
-                          isEditorPreview ? "hover:scale-110 cursor-pointer text-purple-400 hover:border-purple-500" : ""
+                        className={`w-12 h-12 rounded-2xl ${
+                          page.theme === "light" ? "bg-white border-zinc-200 shadow-sm" : "bg-zinc-950 border-zinc-800"
+                        } border flex items-center justify-center ${
+                          isEditorPreview ? "hover:scale-110 cursor-pointer hover:border-purple-500" : ""
                         }`}
                         title={isEditorPreview ? "Clique para trocar o ícone" : undefined}
                       >
-                        <DynamicIcon name={item.iconName || "Zap"} className={`w-6 h-6 ${theme.iconText}`} />
+                        <DynamicIcon
+                          name={item.iconName || "Zap"}
+                          className="w-6 h-6"
+                          style={{ color: page.customAccentHex || theme.primaryHex }}
+                        />
                       </button>
 
                       {item.tag && (
-                        <div className="px-3 py-1 rounded-full bg-purple-950/80 border border-purple-500/40 text-purple-300 text-xs font-bold">
+                        <div
+                          className={`px-3 py-1 rounded-full text-xs font-bold ${
+                            page.theme === "light"
+                              ? "bg-white border border-zinc-200 shadow-sm"
+                              : `${theme.badgeBg} border ${theme.badgeBorder} ${theme.badgeText}`
+                          }`}
+                          style={
+                            page.theme === "light"
+                              ? {
+                                  color: page.customAccentHex || theme.primaryHex,
+                                  borderColor: `${page.customAccentHex || theme.primaryHex}40`,
+                                }
+                              : undefined
+                          }
+                        >
                           <InlineEditableText
                             value={item.tag}
                             onChange={(newVal) =>
@@ -3663,7 +4679,9 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                     </div>
 
                     {/* Card Title */}
-                    <div className="text-xl sm:text-2xl font-bold text-white mb-2">
+                    <div className={`text-xl sm:text-2xl font-bold mb-2 ${
+                      page.theme === "light" ? "text-zinc-950" : "text-white"
+                    }`}>
                       <InlineEditableText
                         value={item.title}
                         onChange={(newVal) =>
@@ -3681,7 +4699,9 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                     </div>
 
                     {/* Card Description */}
-                    <div className="text-zinc-400 text-sm sm:text-base leading-relaxed mb-4">
+                    <div className={`text-sm sm:text-base leading-relaxed mb-4 ${
+                      page.theme === "light" ? "text-zinc-800" : "text-zinc-400"
+                    }`}>
                       <InlineEditableText
                         value={item.description}
                         onChange={(newVal) =>
@@ -3753,8 +4773,12 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                     )}
 
                     {item.metric && (
-                      <div className="pt-4 border-t border-zinc-800/80 flex items-baseline gap-2">
-                        <span className={`text-2xl font-extrabold ${theme.headingGradient}`}>
+                      <div className={`pt-4 border-t flex items-baseline gap-2 ${
+                        page.theme === "light" ? "border-zinc-200" : "border-zinc-800/80"
+                      }`}>
+                        <span className={`text-2xl font-extrabold ${
+                          page.theme === "light" ? "text-zinc-900" : theme.headingGradient
+                        }`}>
                           <InlineEditableText
                             value={item.metric}
                             onChange={(newVal) =>
@@ -3772,6 +4796,61 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                       </div>
                     )}
                   </div>
+
+                  {/* Bento Card bottom Button */}
+                  {(item.buttonText || isEditorPreview) && (
+                    <div className={`mt-4 pt-3 border-t w-full ${
+                      page.theme === "light" ? "border-zinc-100" : "border-zinc-800/40"
+                    }`}>
+                      <a
+                        href={isEditorPreview ? undefined : (item.buttonUrl || "#")}
+                        target={item.buttonUrl?.startsWith("http") ? "_blank" : undefined}
+                        rel="noopener noreferrer"
+                        onClick={(e) => {
+                          if (isEditorPreview) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setPinnedCardId(item.id);
+                            setFloatingCardConfig({
+                              type: "bento",
+                              id: item.id,
+                              title: item.title || `Card Bento #${idx + 1}`,
+                              index: idx,
+                            });
+                          }
+                        }}
+                        className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                          item.buttonStyle === "secondary"
+                            ? (page.theme === "light"
+                                ? "bg-white border border-zinc-200 text-zinc-800 hover:bg-zinc-50"
+                                : "bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-zinc-800")
+                            : (item.buttonStyle === "outline"
+                                ? "bg-transparent border border-purple-500/50 text-purple-400 hover:bg-purple-500/10"
+                                : "bg-purple-600 hover:bg-purple-500 text-white shadow-md shadow-purple-900/20")
+                        }`}
+                        style={
+                          item.buttonStyle !== "secondary" && item.buttonStyle !== "outline" && (page.customAccentHex || theme.primaryHex)
+                            ? { backgroundColor: page.customAccentHex || theme.primaryHex }
+                            : undefined
+                        }
+                      >
+                        <InlineEditableText
+                          value={item.buttonText || (isEditorPreview ? "Adicionar botão" : "")}
+                          onChange={(newVal) =>
+                            updateP((p) => {
+                              const nextItems = [...p.bentoGrid.items];
+                              nextItems[idx] = { ...nextItems[idx], buttonText: newVal };
+                              return { ...p, bentoGrid: { ...p.bentoGrid, items: nextItems } };
+                            })
+                          }
+                          isEditorPreview={isEditorPreview}
+                          tag="span"
+                          placeholder="Texto do botão..."
+                        />
+                        <DynamicIcon name="ArrowRight" className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -3878,12 +4957,18 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
 
             {/* Header */}
             <div className={`mb-12 ${getHeadingAlignClass(page.testimonials.align)}`}>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-xs font-semibold text-amber-400 mb-3">
+              <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mb-3 ${
+                page.theme === "light"
+                  ? "bg-amber-100 border border-amber-200 text-amber-700"
+                  : "bg-zinc-900 border border-zinc-800 text-amber-400"
+              }`}>
                 <Star className="w-3.5 h-3.5 fill-amber-400" />
                 <span>CASOS DE SUCESSO COMPROVADOS</span>
               </div>
 
-              <div className="text-2xl sm:text-4xl font-extrabold text-white mb-3">
+              <div className={`text-2xl sm:text-4xl font-extrabold mb-3 ${
+                page.theme === "light" ? "text-zinc-900" : "text-white"
+              }`}>
                 <InlineEditableText
                   value={page.testimonials.title || "O Que Quem Já Chegou Lá Está Dizendo"}
                   onChange={(newVal) =>
@@ -3896,7 +4981,9 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                 />
               </div>
 
-              <div className="text-zinc-400 text-sm sm:text-base max-w-2xl">
+              <div className={`text-sm sm:text-base max-w-2xl ${
+                page.theme === "light" ? "text-zinc-600" : "text-zinc-400"
+              }`}>
                 <InlineEditableText
                   value={page.testimonials.subtitle || "Resultados auditados e depoimentos reais dos nossos parceiros e mentorados:"}
                   onChange={(newVal) =>
@@ -3937,7 +5024,9 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                     )} ${
                       item.customGradient
                         ? item.customGradient
-                        : "bg-zinc-900/60 border border-zinc-800/80 backdrop-blur-xl"
+                        : (page.theme === "light"
+                            ? "bg-white border border-zinc-200 shadow-sm hover:shadow-md"
+                            : "bg-zinc-900/60 border border-zinc-800/80 backdrop-blur-xl")
                     } flex flex-col justify-between relative group/test hover:border-purple-500/40 hover:bg-zinc-900/80 transition-all cursor-pointer ${
                       isPinned
                         ? "ring-2 ring-purple-500 border-purple-500 shadow-[0_0_35px_rgba(168,85,247,0.4)] scale-[1.01]"
@@ -4103,7 +5192,7 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                             className={`w-4 h-4 ${
                               star <= (item.rating || 5)
                                 ? "fill-amber-400 text-amber-400"
-                                : "text-zinc-700"
+                                : (page.theme === "light" ? "text-zinc-200" : "text-zinc-700")
                             }`}
                           />
                         </button>
@@ -4111,7 +5200,9 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                     </div>
 
                     {/* Testimonial Quote */}
-                    <div className="text-zinc-300 text-sm sm:text-base leading-relaxed mb-6 font-medium italic">
+                    <div className={`text-sm sm:text-base leading-relaxed mb-6 font-medium italic ${
+                      page.theme === "light" ? "text-zinc-700" : "text-zinc-300"
+                    }`}>
                       <InlineEditableText
                         value={item.content}
                         onChange={(newVal) =>
@@ -4131,7 +5222,9 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                   </div>
 
                   {/* Author Meta */}
-                  <div className="flex items-center gap-3 pt-4 border-t border-zinc-800/80">
+                  <div className={`flex items-center gap-3 pt-4 border-t ${
+                    page.theme === "light" ? "border-zinc-100" : "border-zinc-800/80"
+                  }`}>
                     <button
                       type="button"
                       onClick={(e) => {
@@ -4166,7 +5259,9 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                     </button>
 
                     <div className="flex-1 min-w-0">
-                      <div className="font-bold text-sm text-white truncate">
+                      <div className={`font-bold text-sm truncate ${
+                        page.theme === "light" ? "text-zinc-900" : "text-white"
+                      }`}>
                         <InlineEditableText
                           value={item.name}
                           onChange={(newVal) =>
@@ -4181,7 +5276,9 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                           placeholder="Nome..."
                         />
                       </div>
-                      <div className="text-xs text-zinc-400 truncate">
+                      <div className={`text-xs truncate ${
+                        page.theme === "light" ? "text-zinc-500" : "text-zinc-400"
+                      }`}>
                         <InlineEditableText
                           value={item.companyOrCity || item.role || "Cliente Verificado"}
                           onChange={(newVal) =>
@@ -4296,7 +5393,11 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                 page.formSection.cardRadius
               )} ${getPaddingClass(
                 page.formSection.cardPadding
-              )} bg-zinc-900/90 border border-zinc-800 backdrop-blur-2xl shadow-2xl relative overflow-hidden`}
+              )} ${
+                page.theme === "light"
+                  ? "bg-white border border-zinc-200 shadow-xl"
+                  : "bg-zinc-900/90 border border-zinc-800 backdrop-blur-2xl shadow-2xl"
+              } relative overflow-hidden`}
             >
               {/* Glowing Background Accent */}
               <div
@@ -4309,14 +5410,18 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                   <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center mx-auto">
                     <Check className="w-8 h-8" />
                   </div>
-                  <h3 className="text-2xl font-bold text-white">Solicitação Enviada com Sucesso!</h3>
-                  <p className="text-sm text-zinc-400 max-w-md mx-auto">
+                  <h3 className={`text-2xl font-bold ${page.theme === "light" ? "text-zinc-950" : "text-white"}`}>Solicitação Enviada com Sucesso!</h3>
+                  <p className={`text-sm max-w-md mx-auto ${page.theme === "light" ? "text-zinc-600" : "text-zinc-400"}`}>
                     Nossa equipe executiva entrará em contato via WhatsApp e e-mail nos próximos minutos para dar continuidade ao seu atendimento.
                   </p>
                   <button
                     type="button"
                     onClick={() => setIsSubmitted(false)}
-                    className="px-6 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold cursor-pointer"
+                    className={`px-6 py-2.5 rounded-xl text-xs font-bold cursor-pointer ${
+                      page.theme === "light"
+                        ? "bg-zinc-100 hover:bg-zinc-200 text-zinc-800 border border-zinc-200"
+                        : "bg-zinc-800 hover:bg-zinc-700 text-white"
+                    }`}
                   >
                     Enviar Outro Contato
                   </button>
@@ -4334,7 +5439,11 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                       inline
                       className="mb-3"
                     >
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-950 border border-zinc-800 text-xs font-semibold text-emerald-400">
+                      <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
+                        page.theme === "light"
+                          ? "bg-emerald-50 border border-emerald-200 text-emerald-700"
+                          : "bg-zinc-950 border border-zinc-800 text-emerald-400"
+                      }`}>
                         <Lock className="w-3.5 h-3.5" />
                         <span>CONEXÃO CRIPTOGRAFADA SSL 256-BIT</span>
                       </div>
@@ -4348,7 +5457,9 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                       label="Título do Formulário"
                       className="mb-2"
                     >
-                      <div className="text-2xl sm:text-3xl font-extrabold text-white">
+                      <div className={`text-2xl sm:text-3xl font-extrabold ${
+                        page.theme === "light" ? "text-zinc-950" : "text-white"
+                      }`}>
                         <InlineEditableText
                           value={page.formSection.title || "Garanta Sua Condição Exclusiva Agora"}
                           onChange={(newVal) =>
@@ -4369,7 +5480,9 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                       isEditorPreview={isEditorPreview}
                       label="Subtítulo do Formulário"
                     >
-                      <div className="text-zinc-400 text-xs sm:text-sm">
+                      <div className={`text-xs sm:text-sm ${
+                        page.theme === "light" ? "text-zinc-600" : "text-zinc-400"
+                      }`}>
                         <InlineEditableText
                           value={page.formSection.subtitle || "Preencha seus dados abaixo para receber acesso prioritário:"}
                           onChange={(newVal) =>
@@ -4391,7 +5504,9 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
 
                   <form onSubmit={handleLeadSubmit} className="space-y-4">
                     <div>
-                      <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                      <label className={`block text-xs font-semibold mb-1.5 ${
+                        page.theme === "light" ? "text-zinc-700" : "text-zinc-300"
+                      }`}>
                         Nome Completo *
                       </label>
                       <input
@@ -4400,13 +5515,19 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                         value={leadName}
                         onChange={(e) => setLeadName(e.target.value)}
                         placeholder="Ex: Carlos Eduardo Silva"
-                        className="w-full px-4 py-3 rounded-xl bg-zinc-950 border border-zinc-800 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
+                        className={`w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-purple-500 transition-colors ${
+                          page.theme === "light"
+                            ? "bg-white border border-zinc-300 text-zinc-900 placeholder-zinc-400"
+                            : "bg-zinc-950 border border-zinc-800 text-white placeholder-zinc-500"
+                        }`}
                       />
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                        <label className={`block text-xs font-semibold mb-1.5 ${
+                          page.theme === "light" ? "text-zinc-700" : "text-zinc-300"
+                        }`}>
                           WhatsApp / Telefone *
                         </label>
                         <input
@@ -4415,12 +5536,18 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                           value={leadPhone}
                           onChange={(e) => setLeadPhone(formatBrazilianPhone(e.target.value))}
                           placeholder="(11) 98765-4321"
-                          className="w-full px-4 py-3 rounded-xl bg-zinc-950 border border-zinc-800 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
+                          className={`w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-purple-500 transition-colors ${
+                            page.theme === "light"
+                              ? "bg-white border border-zinc-300 text-zinc-900 placeholder-zinc-400"
+                              : "bg-zinc-950 border border-zinc-800 text-white placeholder-zinc-500"
+                          }`}
                         />
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                        <label className={`block text-xs font-semibold mb-1.5 ${
+                          page.theme === "light" ? "text-zinc-700" : "text-zinc-300"
+                        }`}>
                           Melhor E-mail Corporativo *
                         </label>
                         <input
@@ -4429,7 +5556,11 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                           value={leadEmail}
                           onChange={(e) => setLeadEmail(e.target.value)}
                           placeholder="carlos@empresa.com.br"
-                          className="w-full px-4 py-3 rounded-xl bg-zinc-950 border border-zinc-800 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
+                          className={`w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-purple-500 transition-colors ${
+                            page.theme === "light"
+                              ? "bg-white border border-zinc-300 text-zinc-900 placeholder-zinc-400"
+                              : "bg-zinc-950 border border-zinc-800 text-white placeholder-zinc-500"
+                          }`}
                         />
                       </div>
                     </div>
@@ -4448,6 +5579,8 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                         onStyleChange={(s) => setButtonStyle("form-submit-cta", s)}
                         isEditorPreview={isEditorPreview}
                         themeGlow={theme.ctaGlow}
+                        accentColor={page.accentColor}
+                        customAccentHex={page.customAccentHex}
                         nicheContext={page.niche}
                         type="submit"
                         disabled={isSubmitting}
@@ -4456,7 +5589,9 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                     </div>
 
                     {/* Guarantee Text */}
-                    <div className="pt-4 text-center text-xs text-zinc-400 flex items-center justify-center gap-2">
+                    <div className={`pt-4 text-center text-xs flex items-center justify-center gap-2 ${
+                      page.theme === "light" ? "text-zinc-500" : "text-zinc-400"
+                    }`}>
                       <ShieldCheck className="w-4 h-4 text-emerald-400" />
                       <InlineEditableText
                         value={page.formSection.guaranteeText || "Seus dados estão 100% seguros e protegidos pela LGPD."}
@@ -4509,15 +5644,23 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
 
             {/* Header */}
             <div className="text-center mb-12">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-xs font-semibold text-purple-400 mb-3">
+              <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mb-3 ${
+                page.theme === "light"
+                  ? "bg-purple-50 border border-purple-200 text-purple-700"
+                  : "bg-zinc-900 border border-zinc-800 text-purple-400"
+              }`}>
                 <HelpCircle className="w-3.5 h-3.5" />
                 <span>TIRE TODAS AS SUAS DÚVIDAS</span>
               </div>
 
-              <h2 className="text-2xl sm:text-4xl font-extrabold text-white mb-3">
+              <h2 className={`text-2xl sm:text-4xl font-extrabold mb-3 ${
+                page.theme === "light" ? "text-zinc-900" : "text-white"
+              }`}>
                 Perguntas Frequentes
               </h2>
-              <p className="text-zinc-400 text-sm sm:text-base max-w-2xl mx-auto">
+              <p className={`text-sm sm:text-base max-w-2xl mx-auto ${
+                page.theme === "light" ? "text-zinc-600" : "text-zinc-400"
+              }`}>
                 Tudo o que você precisa saber antes de dar o próximo passo:
               </p>
             </div>
@@ -4529,7 +5672,11 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                 return (
                   <div
                     key={item.id || idx}
-                    className="rounded-2xl bg-zinc-900/70 border border-zinc-800/90 backdrop-blur-xl overflow-hidden relative group/faq"
+                    className={`rounded-2xl border transition-all overflow-hidden relative group/faq ${
+                      page.theme === "light"
+                        ? "bg-white border-zinc-200 shadow-sm hover:border-zinc-300"
+                        : "bg-zinc-900/70 border border-zinc-800/90 backdrop-blur-xl"
+                    }`}
                   >
                     {/* Move & Delete FAQ Buttons in Editor */}
                     {isEditorPreview && (
@@ -4617,7 +5764,9 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                       onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
                       className="p-5 sm:p-6 flex items-center justify-between cursor-pointer select-none"
                     >
-                      <div className="text-base sm:text-lg font-bold text-white pr-4 flex-1">
+                      <div className={`text-base sm:text-lg font-bold pr-4 flex-1 ${
+                        page.theme === "light" ? "text-zinc-900" : "text-white"
+                      }`}>
                         <InlineEditableText
                           value={item.question}
                           onChange={(newVal) =>
@@ -4634,14 +5783,20 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                         />
                       </div>
                       <ChevronDown
-                        className={`w-5 h-5 text-zinc-400 transition-transform duration-300 flex-shrink-0 ${
-                          isOpen ? "rotate-180 text-purple-400" : ""
+                        className={`w-5 h-5 transition-transform duration-300 flex-shrink-0 ${
+                          isOpen
+                            ? "rotate-180 text-purple-500"
+                            : (page.theme === "light" ? "text-zinc-400" : "text-zinc-500")
                         }`}
                       />
                     </div>
 
                     {(isOpen || isEditorPreview) && (
-                      <div className="px-5 sm:px-6 pb-6 pt-1 text-zinc-400 text-sm sm:text-base leading-relaxed border-t border-zinc-800/60">
+                      <div className={`px-5 sm:px-6 pb-6 pt-1 text-sm sm:text-base leading-relaxed border-t ${
+                        page.theme === "light"
+                          ? "text-zinc-600 border-zinc-100"
+                          : "text-zinc-400 border-zinc-800/60"
+                      }`}>
                         <InlineEditableText
                           value={item.answer}
                           onChange={(newVal) =>
@@ -4701,7 +5856,7 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
     <div
       className={`min-h-screen ${
         page.theme === "light"
-          ? "bg-slate-50 text-slate-900"
+          ? "bg-white text-zinc-900"
           : "bg-zinc-950 text-white"
       } font-sans selection:bg-purple-500 selection:text-white relative overflow-x-hidden`}
       style={
@@ -4716,7 +5871,10 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
               backgroundPosition: "center",
             }
           : page.theme === "light"
-          ? { background: "#f8fafc" }
+          ? {
+              backgroundColor: "#ffffff",
+              background: `radial-gradient(ellipse at 50% 0%, ${theme.primaryHex}0a 0%, transparent 65%), #ffffff`,
+            }
           : {
               background: `radial-gradient(ellipse at 50% 0%, ${theme.glowColor} 0%, transparent 60%), #09090b`,
             }
@@ -4739,17 +5897,22 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
       {/* Main Content Area */}
       <div className="relative z-10">
         {/* HEADER NAVBAR (MENU SUPERIOR DE REPARTIÇÕES) */}
-        {page.headerNav?.enabled && (
-          <HeaderNavbar
-            config={page.headerNav}
-            accentColor={page.accentColor}
-            theme={page.theme}
-            isEditorPreview={isEditorPreview}
-            onUpdateConfig={(newNav) => updateP((p) => ({ ...p, headerNav: newNav }))}
-            onSelectSection={onSelectSection}
-            onOpenImagePicker={onOpenImagePicker}
-          />
-        )}
+        {(() => {
+          const navConfig = page.headerNav || DEFAULT_HEADER_NAV;
+          if (!navConfig.enabled && !isEditorPreview) return null;
+          return (
+            <HeaderNavbar
+              config={navConfig}
+              accentColor={page.accentColor}
+              customAccentHex={page.customAccentHex}
+              theme={page.theme}
+              isEditorPreview={isEditorPreview}
+              onUpdateConfig={(newNav) => updateP((p) => ({ ...p, headerNav: newNav }))}
+              onSelectSection={onSelectSection}
+              onOpenImagePicker={onOpenImagePicker}
+            />
+          );
+        })()}
         {sectionOrder.map((secName) => renderSection(secName))}
 
         {/* Footer */}
@@ -5109,6 +6272,72 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
                         </button>
                       );
                     })}
+                  </div>
+                </div>
+
+                {/* Botão de Ação CTA do Card */}
+                <div className="space-y-3 pt-3 border-t border-zinc-800/80">
+                  <h4 className="text-zinc-200 font-bold flex items-center gap-1.5 text-xs">
+                    <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                    <span>Botão de Ação CTA (Opcional)</span>
+                  </h4>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-zinc-400 font-semibold">Texto do Botão</label>
+                    <input
+                      type="text"
+                      value={item.buttonText || ""}
+                      onChange={(e) => {
+                        const newVal = e.target.value;
+                        updateP((p) => {
+                          const next = [...p.bentoGrid.items];
+                          next[bentoIdx] = { ...next[bentoIdx], buttonText: newVal };
+                          return { ...p, bentoGrid: { ...p.bentoGrid, items: next } };
+                        });
+                      }}
+                      placeholder="Ex: Saber Mais, Comprar Ebook, etc."
+                      className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white focus:outline-none focus:border-purple-500 font-medium"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1.5">
+                      <label className="block text-zinc-400 font-semibold">Link de Destino / URL</label>
+                      <input
+                        type="text"
+                        value={item.buttonUrl || ""}
+                        onChange={(e) => {
+                          const newVal = e.target.value;
+                          updateP((p) => {
+                            const next = [...p.bentoGrid.items];
+                            next[bentoIdx] = { ...next[bentoIdx], buttonUrl: newVal };
+                            return { ...p, bentoGrid: { ...p.bentoGrid, items: next } };
+                          });
+                        }}
+                        placeholder="Ex: #form-section ou https://..."
+                        className="w-full px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white focus:outline-none focus:border-purple-500"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="block text-zinc-400 font-semibold">Estilo do Botão</label>
+                      <select
+                        value={item.buttonStyle || "primary"}
+                        onChange={(e) => {
+                          const newVal = e.target.value;
+                          updateP((p) => {
+                            const next = [...p.bentoGrid.items];
+                            next[bentoIdx] = { ...next[bentoIdx], buttonStyle: newVal as any };
+                            return { ...p, bentoGrid: { ...p.bentoGrid, items: next } };
+                          });
+                        }}
+                        className="w-full px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white focus:outline-none focus:border-purple-500 cursor-pointer text-xs"
+                      >
+                        <option value="primary">Destaque (Cor Principal)</option>
+                        <option value="secondary">Neutro (Cinza/Branco)</option>
+                        <option value="outline">Borda / Contorno</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               </div>

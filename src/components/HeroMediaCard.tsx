@@ -36,6 +36,7 @@ interface HeroMediaCardProps {
   themeGlow?: string;
   ctaBgClass?: string;
   ctaGlowClass?: string;
+  theme?: string;
   onUpdateHero: (updatedHero: Partial<HeroSection> | ((prev: HeroSection) => Partial<HeroSection>)) => void;
   onOpenImagePicker?: (config: {
     type: "hero" | "logo" | "bento" | "testimonial";
@@ -53,6 +54,7 @@ export const HeroMediaCard: React.FC<HeroMediaCardProps> = ({
   themeGlow,
   ctaBgClass = "bg-gradient-to-r from-purple-600 to-indigo-600",
   ctaGlowClass = "shadow-purple-500/50",
+  theme,
   onUpdateHero,
   onOpenImagePicker,
   childrenOverlay,
@@ -419,11 +421,15 @@ export const HeroMediaCard: React.FC<HeroMediaCardProps> = ({
       <div
         className={`relative overflow-hidden ${
           radius === "3xl" ? "rounded-[2.5rem]" : radius === "2xl" ? "rounded-[2rem]" : "rounded-3xl"
-        } bg-zinc-900/70 backdrop-blur-xl p-2 sm:p-3 border border-zinc-800/80 shadow-2xl transition-all ${
+        } ${
+          theme === "light"
+            ? "bg-white p-2 sm:p-3 border border-zinc-200 shadow-xl"
+            : "bg-zinc-900/70 backdrop-blur-xl p-2 sm:p-3 border border-zinc-800/80 shadow-2xl"
+        } transition-all ${
           isEditorPreview ? "hover:border-purple-500/60" : ""
         }`}
         style={{
-          boxShadow: `0 0 45px ${effectiveGlow}`,
+          boxShadow: theme === "light" ? "0 10px 30px -10px rgba(0,0,0,0.15)" : `0 0 45px ${effectiveGlow}`,
           maxHeight: orientation === "custom" ? `${maxHeightPx}px` : undefined,
         }}
       >

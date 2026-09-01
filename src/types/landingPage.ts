@@ -1,4 +1,4 @@
-export type AccentColor = "orange" | "amber" | "purple" | "emerald" | "cyan" | "rose";
+export type AccentColor = "orange" | "amber" | "purple" | "emerald" | "cyan" | "rose" | "blue" | "indigo" | "red" | "teal" | "gray";
 
 export type TextAlign = "left" | "center" | "right" | "justify";
 export type FontSize =
@@ -49,12 +49,16 @@ export interface ButtonCustomStyle {
 }
 
 export type HeroModel =
-  | "split_image"        // Modelo 1: Split com Imagem / Mockup Lateral (Imagens 3, 4)
-  | "split_video"        // Modelo 2: VSL Vertical & Avaliação Flutuante (Imagem 5)
-  | "centered_showcase"  // Modelo 3: Vitrine Centralizada & Métricas Embutidas (Imagem 1)
-  | "split_lead_form"    // Modelo 4: Captura Direta com Formulário Embutido (Imagens 2, 9)
-  | "b2b_metrics"        // Modelo 5: Consultoria / B2B com 2 Botões e Métricas de Linha (Imagens 6, 7)
-  | "editorial_ebook";   // Modelo 6: Editorial / E-book Clássico Imersivo (Imagem 8)
+  | "split_image"        // Modelo 1: Split com Imagem / Mockup Lateral
+  | "split_video"        // Modelo 2: VSL Vertical & Avaliação Flutuante
+  | "centered_showcase"  // Modelo 3: Vitrine Centralizada & Métricas Embutidas
+  | "split_lead_form"    // Modelo 4: Captura Direta com Formulário Embutido
+  | "b2b_metrics"        // Modelo 5: Consultoria / B2B com 2 Botões e Métricas de Linha
+  | "editorial_ebook"    // Modelo 6: Editorial / E-book Clássico Imersivo
+  | "minimal_glow"       // Modelo 7: Minimalista Tipográfico de Alta Conversão
+  | "urgency_counter"    // Modelo 8: Card Flutuante com Timer de Urgência & Prova Social
+  | "white_pro"          // Modelo 9: Tema White Pro (Clean High-Ticket com Card Prova Social)
+  | "fullscreen_slideshow"; // Modelo 10: Imagens em Slide Tela Cheia com Cronômetro de Troca
 
 export interface SocialProofAvatar {
   name: string;
@@ -91,15 +95,44 @@ export interface HeaderNavLink {
 
 export interface HeaderNavConfig {
   enabled: boolean;
-  logoType: "text" | "image";
+  logoType: "text" | "image" | "both";
   logoText: string;
   logoImageUrl?: string;
+  logoImageHeightPx?: number; // e.g. 24 to 80px, default 36px
   links: HeaderNavLink[];
   ctaText: string;
   ctaTargetSectionId?: string;
   ctaUrl?: string;
   sticky?: boolean;
+  fixed?: boolean;
+  height?: "small" | "medium" | "large";
+  bgColorHex?: string;
+  bgOpacity?: number; // 0 to 100
+  textColorHex?: string;
+  ctaBgColorHex?: string;
+  ctaTextColorHex?: string;
 }
+
+export const DEFAULT_HEADER_NAV: HeaderNavConfig = {
+  enabled: true,
+  logoType: "text",
+  logoText: "COMET.LP",
+  logoImageUrl: "",
+  logoImageHeightPx: 36,
+  links: [
+    { id: "nav_1", label: "Início", targetSectionId: "hero" },
+    { id: "nav_2", label: "Recursos", targetSectionId: "bentoGrid" },
+    { id: "nav_3", label: "Depoimentos", targetSectionId: "testimonials" },
+    { id: "nav_4", label: "Diagnóstico", targetSectionId: "quiz" },
+    { id: "nav_5", label: "FAQ", targetSectionId: "faq" },
+  ],
+  ctaText: "Garantir Vaga",
+  ctaTargetSectionId: "formSection",
+  sticky: true,
+  fixed: true,
+  height: "medium",
+  bgOpacity: 90,
+};
 
 export interface HeroSection {
   badgeText: string;
@@ -126,6 +159,7 @@ export interface HeroSection {
   typewriterPrefix?: string;
   typewriterWords?: string[];
   typewriterSuffix?: string;
+  typewriterShowCursor?: boolean;
   typewriterSpeedMs?: number;
   typewriterDeleteSpeedMs?: number;
   typewriterDelayMs?: number;
@@ -163,6 +197,12 @@ export interface HeroSection {
   secondaryCtaIcon?: string;
   ctaStyle?: ButtonCustomStyle;
   secondaryCtaStyle?: ButtonCustomStyle;
+
+  // Slideshow Config (Modelo 10: Fullscreen Slideshow)
+  slideshowImages?: string[];
+  slideshowIntervalSeconds?: number; // 1, 3, 5, 8, etc. Default 3
+  slideshowOverlayOpacity?: number; // 0 to 100
+  slideshowAutoplay?: boolean;
   
   // Model 3 Showcase Metrics
   showcaseMetrics?: Array<{ id: string; value: string; label: string; sublabel?: string }>;
@@ -190,6 +230,7 @@ export interface SocialProofSection {
   logoItems?: LogoItem[];
   // Visual Customizations
   logoColorMode?: LogoColorMode;
+  logoSize?: "xs" | "sm" | "md" | "lg" | "xl";
   align?: TextAlign;
   headlineSize?: FontSize;
   containerWidth?: ContainerWidth;
@@ -243,6 +284,10 @@ export interface BentoItem {
   customBgColorHex?: string;
   customGradient?: string;
   customTextColorHex?: string;
+  // Custom Button
+  buttonText?: string;
+  buttonUrl?: string;
+  buttonStyle?: "primary" | "secondary" | "outline" | "none";
 }
 
 export interface BentoGridSection {
@@ -355,6 +400,7 @@ export interface LandingPage {
   cityOrRegion: string;
   targetAudience: string;
   accentColor: AccentColor;
+  accentShade?: "light" | "normal" | "dark";
   customAccentHex?: string;
   theme: "light" | "dark" | "hybrid" | "midnight";
   headerNav?: HeaderNavConfig;
@@ -368,6 +414,7 @@ export interface LandingPage {
 
   createdAt: string;
   updatedAt: string;
+  previewToken?: string;
   webhookUrl?: string;
   status: "published" | "draft";
   viewsCount: number;

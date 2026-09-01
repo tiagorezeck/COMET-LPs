@@ -44,9 +44,52 @@ function getGeminiClient(): GoogleGenAI | null {
   });
 }
 
+// In-memory preview pages store for cross-device & cross-tab real-time sync
+const previewPagesStore = new Map<string, any>();
+let lastSavedPreviewPage: any = null;
+
 // Health check
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+// Save / Sync preview page endpoint
+app.post("/api/pages/preview", (req, res) => {
+  try {
+    const page = req.body;
+    if (!page || !page.id) {
+      return res.status(400).json({ error: "Invalid page payload" });
+    }
+
+    // Store by page id
+    previewPagesStore.set(page.id, page);
+
+    // Store by preview token if present
+    if (page.previewToken) {
+      previewPagesStore.set(page.previewToken, page);
+    }
+
+    lastSavedPreviewPage = page;
+    return res.json({ success: true, id: page.id, previewToken: page.previewToken });
+  } catch (err: any) {
+    console.error("Error saving preview page:", err);
+    return res.status(500).json({ error: "Failed to save preview page" });
+  }
+});
+
+// Retrieve preview page by ID or Token
+app.get("/api/pages/preview/:tokenOrId", (req, res) => {
+  const { tokenOrId } = req.params;
+  if (!tokenOrId) {
+    return res.status(400).json({ error: "Missing tokenOrId" });
+  }
+
+  const page = previewPagesStore.get(tokenOrId) || lastSavedPreviewPage;
+  if (page) {
+    return res.json({ success: true, page });
+  }
+
+  return res.status(404).json({ error: "Preview page not found" });
 });
 
 // Get leads submissions

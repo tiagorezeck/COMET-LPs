@@ -1,25 +1,41 @@
-import { LandingPage, LeadSubmission } from "../types/landingPage";
+import { LandingPage, LeadSubmission, DEFAULT_HEADER_NAV } from "../types/landingPage";
 import { PRESET_TEMPLATES } from "../data/templates";
 
 const STORAGE_KEY = "people_cro_landing_pages_v1";
 const LEADS_STORAGE_KEY = "people_cro_leads_v1";
+
+function normalizePage(page: LandingPage): LandingPage {
+  return {
+    ...page,
+    headerNav: page.headerNav
+      ? {
+          ...DEFAULT_HEADER_NAV,
+          ...page.headerNav,
+          links: page.headerNav.links && page.headerNav.links.length > 0
+            ? page.headerNav.links
+            : DEFAULT_HEADER_NAV.links,
+        }
+      : { ...DEFAULT_HEADER_NAV, logoText: page.title ? page.title.split(" ")[0].toUpperCase() : "COMET.LP" },
+  };
+}
 
 export function loadSavedLandingPages(): LandingPage[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
       // Seed with preset templates
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(PRESET_TEMPLATES));
-      return PRESET_TEMPLATES;
+      const normalized = PRESET_TEMPLATES.map(normalizePage);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+      return normalized;
     }
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed) && parsed.length > 0) {
-      return parsed;
+      return parsed.map(normalizePage);
     }
-    return PRESET_TEMPLATES;
+    return PRESET_TEMPLATES.map(normalizePage);
   } catch (err) {
     console.error("Failed to load landing pages from storage:", err);
-    return PRESET_TEMPLATES;
+    return PRESET_TEMPLATES.map(normalizePage);
   }
 }
 
@@ -48,7 +64,42 @@ export function saveSingleLandingPage(page: LandingPage): LandingPage[] {
   }
 
   saveLandingPages(updated);
+
+  try {
+    localStorage.setItem("active_preview_page", JSON.stringify(pageWithUpdatedTimestamp));
+  } catch {}
+
+  // Async sync to server for cross-device & cross-tab preview
+  syncPageWithServerPreview(pageWithUpdatedTimestamp).catch(() => {});
+
   return updated;
+}
+
+export async function syncPageWithServerPreview(page: LandingPage): Promise<boolean> {
+  try {
+    const res = await fetch("/api/pages/preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(page),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function fetchPageFromServerPreview(tokenOrId: string): Promise<LandingPage | null> {
+  try {
+    const res = await fetch(`/api/pages/preview/${encodeURIComponent(tokenOrId)}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.success && data.page) {
+      return normalizePage(data.page);
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 export const saveLandingPageToStorage = saveSingleLandingPage;

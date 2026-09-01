@@ -12,6 +12,8 @@ import {
   Eye,
   Sliders,
   X,
+  Users,
+  Images,
 } from "lucide-react";
 
 export interface HeroModelDefinition {
@@ -22,7 +24,7 @@ export interface HeroModelDefinition {
   icon: React.ElementType;
   description: string;
   bestFor: string;
-  diagram: "split_image" | "split_video" | "centered_showcase" | "split_lead_form" | "b2b_metrics" | "editorial_ebook";
+  diagram: "split_image" | "split_video" | "centered_showcase" | "split_lead_form" | "b2b_metrics" | "editorial_ebook" | "minimal_glow" | "urgency_counter" | "white_pro" | "fullscreen_slideshow";
 }
 
 export const HERO_MODELS: HeroModelDefinition[] = [
@@ -85,6 +87,46 @@ export const HERO_MODELS: HeroModelDefinition[] = [
     description: "Imagem imersiva de fundo com overlay elegante, nome do autor, badge de formatos (PDF, ePub) e botão de download outline.",
     bestFor: "Livros, Biografias, E-books Premium e Autores",
     diagram: "editorial_ebook",
+  },
+  {
+    id: "minimal_glow",
+    title: "Modelo 7: Minimalista Tipográfico",
+    subtitle: "Foco Total em Copy & Prova Social",
+    badge: "Ultra Clean",
+    icon: Sparkles,
+    description: "Headline centralizada em display tipográfico, selo de garantia, botões lado a lado e barra de logos de autoridade.",
+    bestFor: "Startups, Serviços Premium, Mentorias e Lançamentos",
+    diagram: "minimal_glow",
+  },
+  {
+    id: "urgency_counter",
+    title: "Modelo 8: Oferta Relâmpago & Timer",
+    subtitle: "Com Cronômetro Flutuante & Vagas",
+    badge: "Escassez & Urgência",
+    icon: Eye,
+    description: "Cronômetro regressivo destacado no topo, badges de vagas restantes, avatares em tempo real e CTA de liberação imediata.",
+    bestFor: "Black Friday, Lotes Promocionais e Eventos com Vagas Limitadas",
+    diagram: "urgency_counter",
+  },
+  {
+    id: "white_pro",
+    title: "Modelo 9: Tema White Pro",
+    subtitle: "Layout Clean High-Ticket",
+    badge: "Clean Premium",
+    icon: Users,
+    description: "Fundo claro minimalista com tipografia de alto impacto, card de autoridade destacado com avatar, métricas e botão CTA contrastante.",
+    bestFor: "Mentorias VIP, Consultorias Executivas, Serviços High-Ticket e Marcas Pessoais",
+    diagram: "white_pro",
+  },
+  {
+    id: "fullscreen_slideshow",
+    title: "Modelo 10: Imagens em Slide Tela Cheia",
+    subtitle: "Carrossel Imersivo com Timer Customizável",
+    badge: "Slideshow Fullscreen",
+    icon: Images,
+    description: "Diferenciado de todos: fotos em slide de tela inteira trocando automaticamente (1s, 3s, 5s) com card de controle de tempo e visual impactante.",
+    bestFor: "Imobiliárias, Arquitetura, Portfólios, Eventos, Moda e Marcas Visuais",
+    diagram: "fullscreen_slideshow",
   },
 ];
 
@@ -255,6 +297,56 @@ export const HeroModelSelector: React.FC<HeroModelSelectorProps> = ({
                       <div className="w-1/2 h-1.5 rounded border border-purple-400 text-[6px]" />
                     </div>
                   )}
+
+                  {model.diagram === "minimal_glow" && (
+                    <div className="w-full h-full rounded bg-zinc-900 border border-zinc-800 p-1.5 flex flex-col items-center justify-between text-center relative overflow-hidden">
+                      <div className="w-2/5 h-1 rounded bg-purple-400/60 mt-0.5" />
+                      <div className="w-4/5 h-2 rounded bg-white font-bold" />
+                      <div className="flex gap-1">
+                        <div className="w-8 h-2 rounded bg-purple-600" />
+                        <div className="w-8 h-2 rounded bg-zinc-700" />
+                      </div>
+                    </div>
+                  )}
+
+                  {model.diagram === "urgency_counter" && (
+                    <div className="w-full h-full rounded bg-zinc-900 border border-zinc-800 p-1 flex flex-col items-center justify-between relative overflow-hidden">
+                      <div className="w-3/4 h-2 rounded bg-amber-500/30 border border-amber-500/50 flex items-center justify-center">
+                        <div className="w-2/3 h-1 rounded bg-amber-400" />
+                      </div>
+                      <div className="w-4/5 h-2 rounded bg-white" />
+                      <div className="w-full h-2 rounded bg-amber-500" />
+                    </div>
+                  )}
+
+                  {model.diagram === "white_pro" && (
+                    <div className="w-full h-full rounded bg-white border border-zinc-300 p-1.5 flex items-center gap-1.5 relative overflow-hidden text-zinc-900">
+                      <div className="flex-1 space-y-1">
+                        <div className="w-3/4 h-1.5 rounded bg-zinc-900" />
+                        <div className="w-full h-1 rounded bg-zinc-400" />
+                        <div className="w-1/2 h-2 rounded bg-purple-600" />
+                      </div>
+                      <div className="w-10 h-full rounded-lg bg-zinc-100 border border-zinc-300 flex flex-col items-center justify-center p-0.5">
+                        <div className="w-4 h-4 rounded-full bg-purple-500/20 border border-purple-500" />
+                        <div className="w-full h-1 rounded bg-zinc-400 mt-1" />
+                      </div>
+                    </div>
+                  )}
+
+                  {model.diagram === "fullscreen_slideshow" && (
+                    <div className="w-full h-full rounded bg-zinc-950 border border-purple-500/50 p-1 flex flex-col justify-between relative overflow-hidden bg-gradient-to-tr from-purple-950/80 via-zinc-900 to-indigo-950">
+                      <div className="flex justify-between items-center px-1 pt-0.5">
+                        <div className="w-1/3 h-1 rounded bg-purple-400" />
+                        <div className="flex gap-0.5">
+                          <div className="w-1 h-1 rounded-full bg-purple-400" />
+                          <div className="w-1 h-1 rounded-full bg-zinc-600" />
+                          <div className="w-1 h-1 rounded-full bg-zinc-600" />
+                        </div>
+                      </div>
+                      <div className="w-3/4 h-2 rounded bg-white font-bold mx-auto" />
+                      <div className="w-1/2 h-2 rounded bg-purple-600 mx-auto mb-0.5" />
+                    </div>
+                  )}
                 </div>
 
                 {!isCompact && (
@@ -292,7 +384,7 @@ export const HeroModelSelector: React.FC<HeroModelSelectorProps> = ({
                 <span>Escolher Modelo da Seção Hero</span>
               </h3>
               <p className="text-xs text-zinc-400 mt-0.5">
-                Selecione entre os 6 formatos de alta conversão para transformar o topo da sua página.
+                Selecione entre os 10 formatos de alta conversão para transformar o topo da sua página.
               </p>
             </div>
 

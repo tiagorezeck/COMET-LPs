@@ -4,6 +4,7 @@ import { THEME_CONFIGS } from "../utils/theme";
 import { PRESET_TEMPLATES } from "../data/templates";
 import { loadStoredLeads, duplicateLandingPage } from "../utils/storage";
 import { generateStandaloneHtml } from "../utils/htmlExporter";
+import { NetworkPreviewModal } from "./NetworkPreviewModal";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Sparkles,
@@ -32,6 +33,7 @@ import {
   ArrowRight,
   Maximize2,
   Minimize2,
+  Globe,
 } from "lucide-react";
 
 interface DashboardProps {
@@ -53,6 +55,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [isLeadsModalOpen, setIsLeadsModalOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<LeadSubmission | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [networkPreviewPage, setNetworkPreviewPage] = useState<LandingPage | null>(null);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -302,6 +305,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
+                          setNetworkPreviewPage(p);
+                        }}
+                        className="p-2 rounded-xl bg-purple-950/40 border border-purple-500/30 text-purple-300 hover:text-white hover:border-purple-400 transition-colors cursor-pointer"
+                        title="Link de Teste (Celular / Outro Navegador)"
+                      >
+                        <Globe className="w-3.5 h-3.5 text-purple-400" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
                           onDuplicatePage(p);
                         }}
                         className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors cursor-pointer"
@@ -494,6 +509,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         )}
       </AnimatePresence>
+
+      {/* Network / Standalone Preview Modal */}
+      {networkPreviewPage && (
+        <NetworkPreviewModal
+          isOpen={!!networkPreviewPage}
+          onClose={() => setNetworkPreviewPage(null)}
+          page={networkPreviewPage}
+        />
+      )}
     </div>
   );
 };

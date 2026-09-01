@@ -1,4 +1,4 @@
-import { LandingPage } from "../types/landingPage";
+import { LandingPage, DEFAULT_HEADER_NAV } from "../types/landingPage";
 
 export const PRESET_TEMPLATES: LandingPage[] = [
   {
@@ -16,6 +16,7 @@ export const PRESET_TEMPLATES: LandingPage[] = [
     status: "published",
     viewsCount: 14820,
     leadsCount: 1845,
+    headerNav: { ...DEFAULT_HEADER_NAV, logoText: "SCALE.MASTER" },
     visibility: {
       hero: true,
       socialProof: true,
@@ -37,7 +38,7 @@ export const PRESET_TEMPLATES: LandingPage[] = [
       videoThumbnail: "https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=1200&q=80",
       imageUrl: "https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=1200&q=80",
       ctaText: "QUERO FAZER O DIAGNÓSTICO GRATUITO",
-      ctaSubtext: "⚡ Apenas 4 vagas com sessão estratégica individual liberadas",
+      ctaSubtext: "",
       countdownMinutes: 14,
       ratingScore: "4.9/5",
       ratingText: "+14.850 empresários impactados e R$ 48M+ gerados",
@@ -246,6 +247,7 @@ export const PRESET_TEMPLATES: LandingPage[] = [
     status: "published",
     viewsCount: 9240,
     leadsCount: 1420,
+    headerNav: { ...DEFAULT_HEADER_NAV, logoText: "LUMINA.MED", ctaText: "Agendar Consulta" },
     visibility: {
       hero: true,
       socialProof: true,
@@ -267,7 +269,7 @@ export const PRESET_TEMPLATES: LandingPage[] = [
       videoThumbnail: "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1200&q=80",
       imageUrl: "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1200&q=80",
       ctaText: "AGENDAR AVALIAÇÃO PERSONALIZADA",
-      ctaSubtext: "✨ Condição especial para as primeiras 15 avaliações do mês",
+      ctaSubtext: "",
       countdownMinutes: 20,
       ratingScore: "5.0/5",
       ratingText: "+3.200 procedimentos realizados com excelência",
@@ -415,6 +417,7 @@ export const PRESET_TEMPLATES: LandingPage[] = [
     status: "published",
     viewsCount: 22400,
     leadsCount: 3180,
+    headerNav: { ...DEFAULT_HEADER_NAV, logoText: "OMNI.AI", ctaText: "Ver Demonstração" },
     visibility: {
       hero: true,
       socialProof: true,
@@ -436,7 +439,7 @@ export const PRESET_TEMPLATES: LandingPage[] = [
       videoThumbnail: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1200&q=80",
       imageUrl: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1200&q=80",
       ctaText: "SOLICITAR UMA DEMONSTRAÇÃO AO VIVO",
-      ctaSubtext: "⚡ Instalação em menos de 15 minutos sem necessidade de código",
+      ctaSubtext: "",
       countdownMinutes: 10,
       ratingScore: "4.9/5",
       ratingText: "+500 empresas ativas conectadas",

@@ -37,6 +37,7 @@ interface VisualEditableButtonProps {
   defaultIcon?: string;
   themeGlow?: string;
   accentColor?: AccentColor;
+  customAccentHex?: string;
   className?: string;
   nicheContext?: string;
   type?: "button" | "submit";
@@ -82,6 +83,7 @@ export const VisualEditableButton: React.FC<VisualEditableButtonProps> = ({
   defaultIcon = "arrow",
   themeGlow,
   accentColor = "purple",
+  customAccentHex,
   className = "",
   nicheContext,
   type = "button",
@@ -302,7 +304,12 @@ export const VisualEditableButton: React.FC<VisualEditableButtonProps> = ({
           paddingTop: customPaddingYPx ? `${customPaddingYPx}px` : undefined,
           paddingBottom: customPaddingYPx ? `${customPaddingYPx}px` : undefined,
           fontSize: fontSizePx ? `${fontSizePx}px` : undefined,
-          backgroundColor: buttonStyle.customBgColorHex && !buttonStyle.customGradient ? buttonStyle.customBgColorHex : undefined,
+          backgroundColor:
+            buttonStyle.customBgColorHex && !buttonStyle.customGradient
+              ? buttonStyle.customBgColorHex
+              : !buttonStyle.customGradient && !buttonStyle.customBgColorHex && customAccentHex && variant === "primary"
+              ? customAccentHex
+              : undefined,
           color: buttonStyle.customTextColorHex ? buttonStyle.customTextColorHex : undefined,
         }}
       >
