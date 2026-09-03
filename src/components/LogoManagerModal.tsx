@@ -16,8 +16,9 @@ import {
   Image as ImageIcon,
   Upload,
   Link as LinkIcon,
+  Gauge,
 } from "lucide-react";
-import { LogoColorMode, LogoItem } from "../types/landingPage";
+import { LogoColorMode, LogoItem, MarqueeSpeed } from "../types/landingPage";
 
 interface LogoManagerModalProps {
   isOpen: boolean;
@@ -26,11 +27,13 @@ interface LogoManagerModalProps {
   logoItems?: LogoItem[];
   colorMode: LogoColorMode;
   logoSize?: "xs" | "sm" | "md" | "lg" | "xl";
+  marqueeSpeed?: MarqueeSpeed;
   onUpdateLogos: (
     logos: string[],
     colorMode: LogoColorMode,
     logoItems?: LogoItem[],
-    logoSize?: "xs" | "sm" | "md" | "lg" | "xl"
+    logoSize?: "xs" | "sm" | "md" | "lg" | "xl",
+    marqueeSpeed?: MarqueeSpeed
   ) => void;
   accentColorName?: string;
 }
@@ -147,6 +150,7 @@ export const LogoManagerModal: React.FC<LogoManagerModalProps> = ({
   logoItems: initialLogoItems,
   colorMode: initialColorMode = "accent",
   logoSize: initialLogoSize = "sm",
+  marqueeSpeed: initialMarqueeSpeed = "medium",
   onUpdateLogos,
 }) => {
   const [items, setItems] = useState<LogoItem[]>(() => {
@@ -161,6 +165,7 @@ export const LogoManagerModal: React.FC<LogoManagerModalProps> = ({
 
   const [colorMode, setColorMode] = useState<LogoColorMode>(initialColorMode || "accent");
   const [logoSize, setLogoSize] = useState<"xs" | "sm" | "md" | "lg" | "xl">(initialLogoSize || "sm");
+  const [marqueeSpeed, setMarqueeSpeed] = useState<MarqueeSpeed>(initialMarqueeSpeed || "medium");
   const [newLogoText, setNewLogoText] = useState("");
   const [newLogoType, setNewLogoType] = useState<"text" | "image">("text");
   const [newLogoImageUrl, setNewLogoImageUrl] = useState("");
@@ -204,7 +209,7 @@ export const LogoManagerModal: React.FC<LogoManagerModalProps> = ({
 
   const handleSave = () => {
     const textLogos = items.map((it) => it.text || "Logo");
-    onUpdateLogos(textLogos, colorMode, items, logoSize);
+    onUpdateLogos(textLogos, colorMode, items, logoSize, marqueeSpeed);
     onClose();
   };
 
@@ -352,6 +357,76 @@ export const LogoManagerModal: React.FC<LogoManagerModalProps> = ({
                       {s.badge}
                     </span>
                     <span className="text-[10px] text-zinc-500">{s.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Marquee Speed Selector (Parado, Lento, Médio, Rápido) */}
+            <div className="space-y-3 p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Gauge className="w-4 h-4 text-purple-400" />
+                  <label className="text-xs font-bold uppercase tracking-wider text-zinc-300">
+                    Velocidade do Letreiro de Logos
+                  </label>
+                </div>
+                <span className="text-[11px] font-semibold text-purple-400">
+                  {marqueeSpeed === "stopped"
+                    ? "Logos Fixos (Parado)"
+                    : marqueeSpeed === "slow"
+                    ? "Movimento Lento (80s)"
+                    : marqueeSpeed === "fast"
+                    ? "Movimento Rápido (30s)"
+                    : "Movimento Médio (50s)"}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {[
+                  {
+                    id: "stopped",
+                    name: "🛑 Parado",
+                    badge: "Estático",
+                    desc: "Logos fixos, alinhados e sem movimento",
+                  },
+                  {
+                    id: "slow",
+                    name: "🐢 Lento",
+                    badge: "80s",
+                    desc: "Passagem suave, calma e elegante",
+                  },
+                  {
+                    id: "medium",
+                    name: "⚡ Médio",
+                    badge: "50s (Padrão)",
+                    desc: "Velocidade clássica equilibrada",
+                  },
+                  {
+                    id: "fast",
+                    name: "🚀 Rápido",
+                    badge: "30s",
+                    desc: "Passagem dinâmica e acelerada",
+                  },
+                ].map((sp) => (
+                  <button
+                    key={sp.id}
+                    type="button"
+                    onClick={() => setMarqueeSpeed(sp.id as MarqueeSpeed)}
+                    className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
+                      marqueeSpeed === sp.id
+                        ? "bg-purple-600/20 border-purple-500 text-white ring-2 ring-purple-500/40"
+                        : "bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-bold text-xs">{sp.name}</span>
+                      {marqueeSpeed === sp.id && <Check className="w-3.5 h-3.5 text-purple-400" />}
+                    </div>
+                    <span className="text-[10px] font-mono text-purple-300 bg-purple-950/80 px-1.5 py-0.5 rounded w-fit mb-1">
+                      {sp.badge}
+                    </span>
+                    <span className="text-[10px] text-zinc-500">{sp.desc}</span>
                   </button>
                 ))}
               </div>

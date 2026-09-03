@@ -39,12 +39,30 @@
     }
   }
 
-  .animate-marquee {
+  .animate-marquee,
+  .animate-marquee-medium {
     display: flex;
     width: max-content;
-    animation: marquee 25s linear infinite;
+    animation: marquee 50s linear infinite;
   }
-  .animate-marquee:hover {
+  .animate-marquee-slow {
+    display: flex;
+    width: max-content;
+    animation: marquee 80s linear infinite;
+  }
+  .animate-marquee-fast {
+    display: flex;
+    width: max-content;
+    animation: marquee 30s linear infinite;
+  }
+  .animate-marquee-stopped {
+    display: flex;
+    animation: none !important;
+  }
+  .animate-marquee:hover,
+  .animate-marquee-medium:hover,
+  .animate-marquee-slow:hover,
+  .animate-marquee-fast:hover {
     animation-play-state: paused;
   }
 

@@ -649,9 +649,15 @@ export function generateStandaloneHtml(page: LandingPage): string {
 
           ${logosHtml ? `
             <div class="mt-8 overflow-hidden relative">
-              <div class="animate-marquee whitespace-nowrap flex gap-6 items-center ${isLight ? "text-zinc-500" : "text-zinc-400"} font-semibold text-xs sm:text-sm tracking-wider uppercase opacity-85">
-                ${logosHtml + logosHtml}
-              </div>
+              ${(sp.marqueeSpeed || "medium") === "stopped" ? `
+                <div class="flex flex-wrap gap-4 sm:gap-8 items-center justify-center ${isLight ? "text-zinc-500" : "text-zinc-400"} font-semibold text-xs sm:text-sm tracking-wider uppercase opacity-85 py-2">
+                  ${logosHtml}
+                </div>
+              ` : `
+                <div class="${(sp.marqueeSpeed || "medium") === "slow" ? "animate-marquee-slow" : (sp.marqueeSpeed || "medium") === "fast" ? "animate-marquee-fast" : "animate-marquee"} whitespace-nowrap flex gap-6 items-center ${isLight ? "text-zinc-500" : "text-zinc-400"} font-semibold text-xs sm:text-sm tracking-wider uppercase opacity-85">
+                  ${logosHtml + logosHtml}
+                </div>
+              `}
             </div>
           ` : ""}
         </section>
@@ -947,10 +953,23 @@ export function generateStandaloneHtml(page: LandingPage): string {
       0% { transform: translateX(0%); }
       100% { transform: translateX(-50%); }
     }
-    .animate-marquee {
+    .animate-marquee, .animate-marquee-medium {
       display: flex;
       width: 200%;
-      animation: marquee 25s linear infinite;
+      animation: marquee 50s linear infinite;
+    }
+    .animate-marquee-slow {
+      display: flex;
+      width: 200%;
+      animation: marquee 80s linear infinite;
+    }
+    .animate-marquee-fast {
+      display: flex;
+      width: 200%;
+      animation: marquee 30s linear infinite;
+    }
+    .animate-marquee:hover, .animate-marquee-slow:hover, .animate-marquee-fast:hover {
+      animation-play-state: paused;
     }
     input:focus, textarea:focus, select:focus {
       border-color: ${primaryColor} !important;

@@ -3,6 +3,7 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
+import { applyThematicImagesToPage } from "./src/utils/imageResolver";
 
 dotenv.config();
 
@@ -254,7 +255,7 @@ async function callGeminiWithWaterfall(
   throw lastError || new Error("Todos os modelos Gemini estão temporariamente indisponíveis.");
 }
 
-// Adaptive Heuristic CRO Landing Page Generator (Guaranteed zero-downtime fallback)
+// Adaptive Heuristic CRO Landing Page Generator (Guaranteed zero-downtime fallback with intelligent Art Direction)
 function generateAdaptiveLandingPage(params: {
   prompt?: string;
   niche?: string;
@@ -262,27 +263,117 @@ function generateAdaptiveLandingPage(params: {
   targetAudience?: string;
   offerDetails?: string;
   accentColor?: string;
+  theme?: string;
+  heroModel?: string;
 }) {
   const niche = params.niche || "Mentoria & Serviços de Alto Impacto";
   const city = params.cityOrRegion || "São Paulo e Região";
   const audience = params.targetAudience || "Empresários, Profissionais e Líderes";
   const rawPrompt = params.prompt || "Solução completa e aceleradora de resultados";
-  const color = params.accentColor || "purple";
 
-  // Clean prompt snippet
-  const promptSnippet = rawPrompt.length > 50 ? rawPrompt.substring(0, 50) + "..." : rawPrompt;
+  const fullContext = `${niche} ${rawPrompt} ${audience}`.toLowerCase();
 
-  return {
+  // 1. Intelligent Domain Archetype Detection
+  const isHealthOrClinic = /médic|saúde|clínic|odonto|dentist|dermatolog|estétic|psicolog|nutri|hospital|fisioterap|harmoniza|beleza|longevidade/i.test(fullContext);
+  const isSaaSOrTech = /saas|software|app|plataforma|ia|inteligência artificial|bot|whatsapp|automação|tech|dev|dashboard|cloud|cyber/i.test(fullContext);
+  const isHighTicketMentorship = /mentoria|mastermind|high-ticket|high ticket|coaching|liderança|executiv|imersão|aceleração/i.test(fullContext);
+  const isB2BConsulting = /consultoria|b2b|gestão|processos|corporativ|empresarial|financeir|contábil|tributári|advocacia|advogad|jurídic/i.test(fullContext);
+  const isEbookOrCourse = /ebook|e-book|livro|curso|formação|treinamento|certificação|aula|método/i.test(fullContext);
+  const isRealEstateOrSolar = /imóve|imobiliár|corretor|solar|energia|engenharia|construção|arquitet|casa|terreno/i.test(fullContext);
+  const isEventsOrUrgency = /evento|congresso|imersão|vagas|workshop|presencial|show|encontro/i.test(fullContext);
+
+  // 2. Intelligent Theme Selection (Light / Dark / Midnight / Hybrid)
+  let chosenTheme: "light" | "dark" | "midnight" | "hybrid" = "dark";
+  if (params.theme && ["light", "dark", "midnight", "hybrid"].includes(params.theme) && params.theme !== "auto") {
+    chosenTheme = params.theme as any;
+  } else {
+    if (isHealthOrClinic) {
+      chosenTheme = "light"; // White Pro / Clean Medical aesthetic
+    } else if (isRealEstateOrSolar) {
+      chosenTheme = Math.random() > 0.5 ? "light" : "dark";
+    } else if (isB2BConsulting) {
+      chosenTheme = Math.random() > 0.5 ? "light" : "midnight";
+    } else if (isSaaSOrTech) {
+      chosenTheme = Math.random() > 0.5 ? "dark" : "midnight";
+    } else if (isHighTicketMentorship) {
+      chosenTheme = "midnight";
+    } else {
+      chosenTheme = Math.random() > 0.5 ? "dark" : "light";
+    }
+  }
+
+  // 3. Intelligent Accent Color Selection
+  let chosenColor = params.accentColor;
+  if (!chosenColor || chosenColor === "auto") {
+    if (isHealthOrClinic) {
+      chosenColor = /estétic|harmoniza|beleza/i.test(fullContext) ? "rose" : "emerald";
+    } else if (isSaaSOrTech) {
+      chosenColor = Math.random() > 0.5 ? "cyan" : "purple";
+    } else if (isHighTicketMentorship) {
+      chosenColor = Math.random() > 0.5 ? "amber" : "purple";
+    } else if (isB2BConsulting) {
+      chosenColor = /jurídic|advogad/i.test(fullContext) ? "blue" : "indigo";
+    } else if (isRealEstateOrSolar) {
+      chosenColor = /solar|energia/i.test(fullContext) ? "amber" : "emerald";
+    } else if (isEbookOrCourse) {
+      chosenColor = "orange";
+    } else {
+      chosenColor = "purple";
+    }
+  }
+
+  // 4. Intelligent Hero Model Selection
+  let chosenHeroModel: string = "split_image";
+  if (params.heroModel && params.heroModel !== "auto") {
+    chosenHeroModel = params.heroModel;
+  } else {
+    if (isHealthOrClinic) {
+      chosenHeroModel = chosenTheme === "light" ? "white_pro" : "split_image";
+    } else if (isSaaSOrTech) {
+      chosenHeroModel = Math.random() > 0.5 ? "centered_showcase" : "minimal_glow";
+    } else if (isHighTicketMentorship) {
+      chosenHeroModel = Math.random() > 0.5 ? "b2b_metrics" : "split_video";
+    } else if (isB2BConsulting) {
+      chosenHeroModel = "b2b_metrics";
+    } else if (isEbookOrCourse) {
+      chosenHeroModel = "editorial_ebook";
+    } else if (isEventsOrUrgency) {
+      chosenHeroModel = "urgency_counter";
+    } else if (isRealEstateOrSolar) {
+      chosenHeroModel = "split_lead_form";
+    } else {
+      chosenHeroModel = "split_image";
+    }
+  }
+
+  // 5. Intelligent Strategic Section Ordering
+  let chosenSectionOrder: Array<"hero" | "socialProof" | "quiz" | "bentoGrid" | "testimonials" | "formSection" | "faq">;
+  if (isSaaSOrTech) {
+    chosenSectionOrder = ["hero", "socialProof", "bentoGrid", "quiz", "testimonials", "formSection", "faq"];
+  } else if (isHighTicketMentorship || isB2BConsulting) {
+    chosenSectionOrder = ["hero", "socialProof", "quiz", "bentoGrid", "testimonials", "formSection", "faq"];
+  } else if (isHealthOrClinic || isRealEstateOrSolar) {
+    chosenSectionOrder = ["hero", "quiz", "socialProof", "bentoGrid", "testimonials", "formSection", "faq"];
+  } else {
+    chosenSectionOrder = ["hero", "socialProof", "quiz", "bentoGrid", "testimonials", "formSection", "faq"];
+  }
+
+  const isVideoModel = chosenHeroModel === "split_video";
+
+  const rawPage = {
     title: `Aceleração CRO • ${niche}`,
     niche: niche,
     cityOrRegion: city,
     targetAudience: audience,
-    accentColor: color,
+    accentColor: chosenColor,
+    theme: chosenTheme,
+    sectionOrder: chosenSectionOrder,
     hero: {
+      model: chosenHeroModel,
       badgeText: `⚡ Exclusivo para ${city} • Vagas Abertas`,
       headline: `Multiplique seus Resultados com a Metodologia Definitiva para ${niche}`,
       subheadline: `Elimine a estagnação e implemente um ecossistema comprovado para atrair clientes de alto valor em ${city}.`,
-      mediaType: "video",
+      mediaType: isVideoModel ? "video" : "image",
       videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
       videoThumbnail: "https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=1200&q=80",
       imageUrl: "https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=1200&q=80",
@@ -296,6 +387,19 @@ function generateAdaptiveLandingPage(params: {
         { name: "Mariana C.", avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80" },
         { name: "Rodrigo F.", avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80" },
       ],
+      b2bMetrics: [
+        { id: "b2bm_1", value: "+340%", label: "Média de Crescimento", sublabel: "Validado no primeiro trimestre" },
+        { id: "b2bm_2", value: "99.4%", label: "Satisfação de Clientes", sublabel: "Em mais de 50 cidades" },
+        { id: "b2bm_3", value: "10 Min", label: "Tempo de Resposta", sublabel: "Atendimento direto e consultivo" },
+      ],
+      showcaseMetrics: [
+        { id: "sm_1", value: "99.9%", label: "Eficiência Operacional" },
+        { id: "sm_2", value: "3.8x", label: "Aceleração de Retorno" },
+        { id: "sm_3", value: "24/7", label: "Disponibilidade Contínua" },
+      ],
+      scarcityLabel: `Vagas Restantes para ${city}`,
+      scarcityRemainingSlots: 6,
+      scarcityTotalSlots: 20,
     },
     socialProof: {
       marqueeTitle: "EMPRESAS E LÍDERES QUE VALIDAM E APROVAM NOSSO MÉTODO",
@@ -420,7 +524,7 @@ function generateAdaptiveLandingPage(params: {
           companyOrCity: city,
           avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
           rating: 5,
-          content: "Design impecável no padrão dark premium. Nossos clientes elogiam a sofisticação da página diariamente.",
+          content: "Design impecável com alta autoridade. Nossos clientes elogiam a sofisticação da página diariamente.",
           resultHighlight: "3.6x Mais Vendas",
           verified: true,
         },
@@ -466,36 +570,72 @@ function generateAdaptiveLandingPage(params: {
       },
     ],
   };
+
+  return applyThematicImagesToPage(rawPage);
 }
 
 // AI Landing Page Generation Endpoint
 app.post("/api/ai/generate-landing-page", async (req, res) => {
   try {
-    const { prompt, niche, cityOrRegion, targetAudience, offerDetails, accentColor } = req.body;
+    const { prompt, niche, cityOrRegion, targetAudience, offerDetails, accentColor, theme, heroModel } = req.body;
 
     const ai = getGeminiClient();
 
-    const systemInstruction = `Você é um Engenheiro de UI/UX Frontend de Elite e especialista em CRO (Conversion Rate Optimization), focado no padrão 'People', 'V0' e lançamentos de alto ticket.
-Seu objetivo é gerar o blueprint JSON completo e impecável de uma Landing Page de altíssima conversão no estilo Dark/Hybrid Premium.
+    const systemInstruction = `Você é o LAN, um Diretor de Arte Digital e Engenheiro de CRO (Conversion Rate Optimization) de Nível Mundial.
+Seu objetivo é gerar o blueprint JSON completo de uma Landing Page ultra personalizada e estrategicamente calibrada para o nicho, público e produto fornecido.
+
+DIRETRIZ DE NÃO REPETIÇÃO & ESCOLHA AUTÔNOMA DO MELHOR MODELO (CRÍTICO):
+Você NUNCA deve gerar todas as landing pages iguais. Você deve agir como um Diretor de Arte e definir autonomamente a melhor estética visual:
+
+1. DEFINIÇÃO DO TEMA ('theme'):
+- 'light' (Clean White Pro / Sofisticação Clara): Escolha 'light' para Clínicas Médicas, Estética, Dermatologia, Odontologia, Longevidade, Psicologia, Arquitetura, Imobiliárias de Luxo ou Negócios onde o fundo claro transmite assepsia, alta confiança e requinte.
+- 'dark' (Cyber Dark CRO): Escolha 'dark' para Tecnologia, Automação, Bots de WhatsApp, Plataformas SaaS, Tráfego Pago, Lançamentos e Produtos Digitais.
+- 'midnight' (Preto Profundo / Luxo / Executivo): Escolha 'midnight' para Mentorias High-Ticket (R$ 5k a R$ 50k), Masterminds, Consultorias B2B Corporativas e Advocacia de Alto Padrão.
+- 'hybrid' (Contraste Alternado): Escolha 'hybrid' para Treinamentos, Imersões e Cursos com blocos temáticos claros e escuros.
+
+2. DEFINIÇÃO DO MODELO DE HERO ('hero.model'):
+- 'split_image': Perfeito para produtos com fotos, clínicas, serviços locais ou mockups laterais.
+- 'split_video': Ideal para lançamentos com VSL, infoprodutos, cursos e mentorias em vídeo.
+- 'centered_showcase': Excelente para SaaS, IA, plataformas digitais e dashboards modernos.
+- 'split_lead_form': Indicado para captura direta de leads em nichos com decisão rápida (ex: imobiliário, orçamento expresso, vagas de eventos).
+- 'b2b_metrics': Excelente para Consultorias B2B, Finanças, Logística e Gestão onde números e autoridade são vitais.
+- 'editorial_ebook': Ideal para materiais ricos, e-books, metodologias literárias e formações com autor.
+- 'minimal_glow': Para marcas minimalistas, startups modernas e produtos de tecnologia refinada.
+- 'urgency_counter': Perfeito para imersões com poucas vagas, contagem regressiva ativa e compras por impulso.
+- 'white_pro': Específico para alto padrão médico e estético com cards de prova social flutuantes.
+- 'fullscreen_slideshow': Para eventos, turismo e experiências visuais imersivas.
+
+3. DEFINIÇÃO DA PALETA CROMÁTICA ('accentColor'):
+- 'rose' / 'teal': Perfeito para Estética, Beleza, Cosméticos e Dermatologia.
+- 'emerald': Saúde, Medicina, Finanças, Dinheiro, Investimentos e Longevidade.
+- 'cyan' / 'purple': SaaS, Inteligência Artificial, Bots, Tecnologia e Inovação.
+- 'amber' / 'orange': Mentorias, Liderança, Alta Conversão, Energia Solar, Alimentos e Negócios.
+- 'blue' / 'indigo': B2B, Jurídico, Advocacia, Institucional e Consultoria Empresarial.
+- 'gray': Minimalismo tipográfico editorial.
+
+4. SEQUÊNCIA DAS SEÇÕES ('sectionOrder'):
+- Varie a ordem conforme a consciência do lead (ex: coloque 'quiz' mais acima para qualificação imediata, ou 'bentoGrid' antes quando o método precisa ser explicado primeiro).
 
 Regras de Copy e Estrutura:
 1. Adapte fortemente a copy para a cidade/região ('${cityOrRegion || "Brasil"}') e nicho ('${niche || "Geral"}').
-2. Crie badges de urgência e escassez regional (ex: "⚡ Vagas Abertas para [Cidade/Região] - Últimas 7 Vagas").
+2. Crie badges de urgência e escassez regional autênticos.
 3. Headline ultra impactante, sem clichês genéricos. Foque na dor profunda e no benefício de alto valor.
 4. Subtítulo que destrói as principais objeções.
 5. Crie um Quiz de Qualificação de 3 perguntas interativas que qualifique o lead e gere curiosidade.
-6. Crie uma estrutura Bento Grid de 4 a 5 blocos apresentando o método / benefícios com ícones do Lucide (como Zap, ShieldCheck, Target, TrendingUp, Sparkles, Award, Users, CheckCircle, BarChart3, Rocket).
-7. Crie 3 depoimentos ultra realistas com nomes brasileiros, cidades, métricas de resultado e avatar de fotos reais de alta qualidade (Unsplash).
+6. Crie uma estrutura Bento Grid de 3 a 5 blocos apresentando o método / benefícios com ícones do Lucide (como Zap, ShieldCheck, Target, TrendingUp, Sparkles, Award, Users, CheckCircle, BarChart3, Rocket).
+7. Crie 3 depoimentos ultra realistas com nomes brasileiros, cidades, métricas de resultado e avatar de fotos reais de alta qualidade.
 8. Configure formulário com garantia (7, 15 ou 30 dias) e botão CTA gigante de ação imediata.
 9. Retorne APENAS o JSON no formato solicitado.`;
 
-    const userPromptText = `Gere uma Landing Page de alta conversão completa para o seguinte briefing:
+    const userPromptText = `Gere uma Landing Page de alta conversão completa com DIREÇÃO DE ARTE personalizada para o seguinte briefing:
 - Briefing / Ideia: ${prompt || "Programa de aceleração de resultados e mentoria premium"}
 - Nicho de Mercado: ${niche || "Empreendedorismo / Serviços de Alto Valor"}
 - Cidade / Região: ${cityOrRegion || "Nacional / São Paulo"}
 - Público-Alvo: ${targetAudience || "Empresários, profissionais liberais e tomadores de decisão"}
 - Oferta / Diferenciais: ${offerDetails || "Acesso imediato com garantia incondicional e suporte individualizado"}
-- Cor de Acento sugerida: ${accentColor || "emerald"}`;
+- Preferência de Tema (ou auto): ${theme || "auto (LAN decide se será claro, escuro, midnight ou hybrid)"}
+- Preferência de Modelo de Hero (ou auto): ${heroModel || "auto (LAN decide o melhor dos 10 modelos)"}
+- Preferência de Cor (ou auto): ${accentColor || "auto (LAN decide a melhor cor psicológica)"}`;
 
     const responseSchema = {
       type: Type.OBJECT,
@@ -504,13 +644,36 @@ Regras de Copy e Estrutura:
         niche: { type: Type.STRING },
         cityOrRegion: { type: Type.STRING },
         targetAudience: { type: Type.STRING },
+        theme: {
+          type: Type.STRING,
+          enum: ["light", "dark", "midnight", "hybrid"],
+        },
         accentColor: {
           type: Type.STRING,
-          enum: ["emerald", "purple", "cyan", "amber", "rose"],
+          enum: ["orange", "amber", "purple", "emerald", "cyan", "rose", "blue", "indigo", "teal", "gray"],
+        },
+        sectionOrder: {
+          type: Type.ARRAY,
+          items: { type: Type.STRING },
         },
         hero: {
           type: Type.OBJECT,
           properties: {
+            model: {
+              type: Type.STRING,
+              enum: [
+                "split_image",
+                "split_video",
+                "centered_showcase",
+                "split_lead_form",
+                "b2b_metrics",
+                "editorial_ebook",
+                "minimal_glow",
+                "urgency_counter",
+                "white_pro",
+                "fullscreen_slideshow",
+              ],
+            },
             badgeText: { type: Type.STRING },
             headline: { type: Type.STRING },
             subheadline: { type: Type.STRING },
@@ -694,9 +857,11 @@ Regras de Copy e Estrutura:
           responseSchema,
         });
 
+        const enhancedData = applyThematicImagesToPage(result.data);
+
         return res.json({
           success: true,
-          data: result.data,
+          data: enhancedData,
           source: "gemini",
           modelUsed: result.modelUsed,
         });
@@ -713,6 +878,8 @@ Regras de Copy e Estrutura:
           targetAudience,
           offerDetails,
           accentColor,
+          theme,
+          heroModel,
         });
 
         return res.json({
@@ -731,6 +898,8 @@ Regras de Copy e Estrutura:
         targetAudience,
         offerDetails,
         accentColor,
+        theme,
+        heroModel,
       });
 
       return res.json({

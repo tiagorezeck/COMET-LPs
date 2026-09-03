@@ -3524,145 +3524,175 @@ export const LandingPageRenderer: React.FC<LandingPageRendererProps> = ({
               />
             </div>
 
-            {/* Animated Infinite Logo Marquee */}
-            <div className={`relative overflow-hidden py-4 mb-14 border-y rounded-2xl mask-gradient ${
-              page.theme === "light"
-                ? "border-zinc-200/80 bg-zinc-100/50"
-                : "border-zinc-800/60 bg-zinc-950/40"
-            }`}>
-              {(() => {
-                const logoSizeKey = page.socialProof.logoSize || "sm";
-                const imgHeightClass =
-                  logoSizeKey === "xs"
-                    ? "h-5 sm:h-6"
-                    : logoSizeKey === "md"
-                    ? "h-10 sm:h-12"
-                    : logoSizeKey === "lg"
-                    ? "h-14 sm:h-16"
-                    : logoSizeKey === "xl"
-                    ? "h-20 sm:h-24"
-                    : "h-7 sm:h-8";
+            {/* Animated or Static Logo Marquee */}
+            {(() => {
+              const speedKey = page.socialProof.marqueeSpeed || "medium";
+              const isStopped = speedKey === "stopped";
+              const maskClass = isStopped ? "" : "mask-gradient";
 
-                const iconSizeClass =
-                  logoSizeKey === "xs"
-                    ? "w-3.5 h-3.5"
-                    : logoSizeKey === "md"
-                    ? "w-6 h-6"
-                    : logoSizeKey === "lg"
-                    ? "w-8 h-8"
-                    : logoSizeKey === "xl"
-                    ? "w-10 h-10"
-                    : "w-4.5 h-4.5";
+              return (
+                <div className={`relative overflow-hidden py-4 mb-14 border-y rounded-2xl ${maskClass} ${
+                  page.theme === "light"
+                    ? "border-zinc-200/80 bg-zinc-100/50"
+                    : "border-zinc-800/60 bg-zinc-950/40"
+                }`}>
+                  {(() => {
+                    const logoSizeKey = page.socialProof.logoSize || "sm";
+                    const imgHeightClass =
+                      logoSizeKey === "xs"
+                        ? "h-5 sm:h-6"
+                        : logoSizeKey === "md"
+                        ? "h-10 sm:h-12"
+                        : logoSizeKey === "lg"
+                        ? "h-14 sm:h-16"
+                        : logoSizeKey === "xl"
+                        ? "h-20 sm:h-24"
+                        : "h-7 sm:h-8";
 
-                const textSizeClass =
-                  logoSizeKey === "xs"
-                    ? "text-xs"
-                    : logoSizeKey === "md"
-                    ? "text-base sm:text-lg font-extrabold"
-                    : logoSizeKey === "lg"
-                    ? "text-xl sm:text-2xl font-extrabold"
-                    : logoSizeKey === "xl"
-                    ? "text-2xl sm:text-3xl font-black"
-                    : "text-sm sm:text-base font-bold";
+                    const iconSizeClass =
+                      logoSizeKey === "xs"
+                        ? "w-3.5 h-3.5"
+                        : logoSizeKey === "md"
+                        ? "w-6 h-6"
+                        : logoSizeKey === "lg"
+                        ? "w-8 h-8"
+                        : logoSizeKey === "xl"
+                        ? "w-10 h-10"
+                        : "w-4.5 h-4.5";
 
-                const gapClass =
-                  logoSizeKey === "xs"
-                    ? "gap-6 sm:gap-8 pr-6 sm:pr-8"
-                    : logoSizeKey === "md"
-                    ? "gap-12 sm:gap-14 pr-12 sm:pr-14"
-                    : logoSizeKey === "lg"
-                    ? "gap-14 sm:gap-18 pr-14 sm:pr-18"
-                    : logoSizeKey === "xl"
-                    ? "gap-16 sm:gap-22 pr-16 sm:pr-22"
-                    : "gap-10 sm:gap-12 pr-10 sm:pr-12";
+                    const textSizeClass =
+                      logoSizeKey === "xs"
+                        ? "text-xs"
+                        : logoSizeKey === "md"
+                        ? "text-base sm:text-lg font-extrabold"
+                        : logoSizeKey === "lg"
+                        ? "text-xl sm:text-2xl font-extrabold"
+                        : logoSizeKey === "xl"
+                        ? "text-2xl sm:text-3xl font-black"
+                        : "text-sm sm:text-base font-bold";
 
-                const renderLogosGroup = (keyPrefix: string) => {
-                  const logoItems = page.socialProof.logoItems;
-                  if (logoItems && logoItems.length > 0) {
-                    // Ensure enough items to span screen width for seamless looping
-                    let expandedItems = [...logoItems];
-                    while (expandedItems.length < 8) {
-                      expandedItems = [...expandedItems, ...logoItems];
-                    }
+                    const gapClass =
+                      logoSizeKey === "xs"
+                        ? "gap-6 sm:gap-8 pr-6 sm:pr-8"
+                        : logoSizeKey === "md"
+                        ? "gap-12 sm:gap-14 pr-12 sm:pr-14"
+                        : logoSizeKey === "lg"
+                        ? "gap-14 sm:gap-18 pr-14 sm:pr-18"
+                        : logoSizeKey === "xl"
+                        ? "gap-16 sm:gap-22 pr-16 sm:pr-22"
+                        : "gap-10 sm:gap-12 pr-10 sm:pr-12";
 
-                    return expandedItems.map((item, idx) => {
-                      const mode = item.colorMode || page.socialProof.logoColorMode || "accent";
-                      if (item.type === "image" && item.imageUrl) {
-                        return (
-                          <div key={`${keyPrefix}-${item.id || idx}-${idx}`} className="flex items-center gap-2 py-1 shrink-0">
-                            <img
-                              src={item.imageUrl}
-                              alt={item.text}
-                              className={`${imgHeightClass} w-auto object-contain transition-all ${
-                                mode === "original"
-                                  ? "filter opacity-90 hover:opacity-100"
+                    const renderLogosGroup = (keyPrefix: string, isStaticMode = false) => {
+                      const logoItems = page.socialProof.logoItems;
+                      if (logoItems && logoItems.length > 0) {
+                        let listToRender = logoItems;
+                        if (!isStaticMode) {
+                          let expanded = [...logoItems];
+                          while (expanded.length < 8) {
+                            expanded = [...expanded, ...logoItems];
+                          }
+                          listToRender = expanded;
+                        }
+
+                        return listToRender.map((item, idx) => {
+                          const mode = item.colorMode || page.socialProof.logoColorMode || "accent";
+                          if (item.type === "image" && item.imageUrl) {
+                            return (
+                              <div key={`${keyPrefix}-${item.id || idx}-${idx}`} className="flex items-center gap-2 py-1 shrink-0">
+                                <img
+                                  src={item.imageUrl}
+                                  alt={item.text}
+                                  className={`${imgHeightClass} w-auto object-contain transition-all ${
+                                    mode === "original"
+                                      ? "filter opacity-90 hover:opacity-100"
+                                      : mode === "monochrome"
+                                      ? (page.theme === "light" ? "filter grayscale brightness-0 contrast-150 opacity-60 hover:opacity-80" : "filter grayscale contrast-200 brightness-200 opacity-80")
+                                      : (page.theme === "light" ? "filter contrast-125 opacity-90" : "filter brightness-200 contrast-125 opacity-90")
+                                  }`}
+                                />
+                              </div>
+                            );
+                          }
+                          return (
+                            <div
+                              key={`${keyPrefix}-${item.id || idx}-${idx}`}
+                              className={`flex items-center gap-2 transition-all duration-300 py-1 shrink-0 ${
+                                mode === "accent"
+                                  ? `opacity-80 hover:opacity-100 ${theme.iconText}`
                                   : mode === "monochrome"
-                                  ? (page.theme === "light" ? "filter grayscale brightness-0 contrast-150 opacity-60 hover:opacity-80" : "filter grayscale contrast-200 brightness-200 opacity-80")
-                                  : (page.theme === "light" ? "filter contrast-125 opacity-90" : "filter brightness-200 contrast-125 opacity-90")
+                                  ? "opacity-60 hover:opacity-100 text-zinc-400"
+                                  : "opacity-80 hover:opacity-100 text-zinc-200"
                               }`}
-                            />
-                          </div>
-                        );
+                            >
+                              <DynamicIcon name="Building" className={iconSizeClass} />
+                              <span className={`${textSizeClass} tracking-tight whitespace-nowrap`}>
+                                {item.text}
+                              </span>
+                            </div>
+                          );
+                        });
                       }
-                      return (
+
+                      const rawLogos =
+                        page.socialProof.marqueeLogos && page.socialProof.marqueeLogos.length > 0
+                          ? page.socialProof.marqueeLogos
+                          : POPULAR_LOGO_PRESETS.map((p) => p.name).slice(0, 6);
+
+                      let listToRender = rawLogos;
+                      if (!isStaticMode) {
+                        let expandedRaw = [...rawLogos];
+                        while (expandedRaw.length < 8) {
+                          expandedRaw = [...expandedRaw, ...rawLogos];
+                        }
+                        listToRender = expandedRaw;
+                      }
+
+                      return listToRender.map((logoName, idx) => (
                         <div
-                          key={`${keyPrefix}-${item.id || idx}-${idx}`}
+                          key={`${keyPrefix}-${idx}`}
                           className={`flex items-center gap-2 transition-all duration-300 py-1 shrink-0 ${
-                            mode === "accent"
+                            (page.socialProof.logoColorMode || "original") === "accent"
                               ? `opacity-80 hover:opacity-100 ${theme.iconText}`
-                              : mode === "monochrome"
-                              ? "opacity-60 hover:opacity-100 text-zinc-400"
-                              : "opacity-80 hover:opacity-100 text-zinc-200"
+                              : "opacity-70 hover:opacity-100 text-zinc-300"
                           }`}
                         >
                           <DynamicIcon name="Building" className={iconSizeClass} />
                           <span className={`${textSizeClass} tracking-tight whitespace-nowrap`}>
-                            {item.text}
+                            {logoName}
                           </span>
                         </div>
+                      ));
+                    };
+
+                    if (isStopped) {
+                      return (
+                        <div className="w-full flex flex-wrap items-center justify-center gap-6 sm:gap-10 md:gap-14 px-4 select-none">
+                          {renderLogosGroup("static", true)}
+                        </div>
                       );
-                    });
-                  }
+                    }
 
-                  const rawLogos =
-                    page.socialProof.marqueeLogos && page.socialProof.marqueeLogos.length > 0
-                      ? page.socialProof.marqueeLogos
-                      : POPULAR_LOGO_PRESETS.map((p) => p.name).slice(0, 6);
+                    const speedAnimationClass =
+                      speedKey === "slow"
+                        ? "animate-marquee-slow"
+                        : speedKey === "fast"
+                        ? "animate-marquee-fast"
+                        : "animate-marquee-medium";
 
-                  let expandedRaw = [...rawLogos];
-                  while (expandedRaw.length < 8) {
-                    expandedRaw = [...expandedRaw, ...rawLogos];
-                  }
-
-                  return expandedRaw.map((logoName, idx) => (
-                    <div
-                      key={`${keyPrefix}-${idx}`}
-                      className={`flex items-center gap-2 transition-all duration-300 py-1 shrink-0 ${
-                        (page.socialProof.logoColorMode || "original") === "accent"
-                          ? `opacity-80 hover:opacity-100 ${theme.iconText}`
-                          : "opacity-70 hover:opacity-100 text-zinc-300"
-                      }`}
-                    >
-                      <DynamicIcon name="Building" className={iconSizeClass} />
-                      <span className={`${textSizeClass} tracking-tight whitespace-nowrap`}>
-                        {logoName}
-                      </span>
-                    </div>
-                  ));
-                };
-
-                return (
-                  <div className="flex w-max animate-marquee items-center select-none">
-                    <div className={`flex items-center ${gapClass} shrink-0`}>
-                      {renderLogosGroup("t1")}
-                    </div>
-                    <div className={`flex items-center ${gapClass} shrink-0`} aria-hidden="true">
-                      {renderLogosGroup("t2")}
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
+                    return (
+                      <div className={`flex w-max ${speedAnimationClass} items-center select-none`}>
+                        <div className={`flex items-center ${gapClass} shrink-0`}>
+                          {renderLogosGroup("t1")}
+                        </div>
+                        <div className={`flex items-center ${gapClass} shrink-0`} aria-hidden="true">
+                          {renderLogosGroup("t2")}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              );
+            })()}
 
             {/* Numerical Proof Metric Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 max-w-6xl mx-auto">

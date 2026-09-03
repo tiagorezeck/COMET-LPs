@@ -9,6 +9,7 @@ import {
   ContainerWidth,
   LogoColorMode,
   HeroModel,
+  MarqueeSpeed,
 } from "../types/landingPage";
 import { THEME_CONFIGS } from "../utils/theme";
 import { LandingPageRenderer } from "./LandingPageRenderer";
@@ -372,26 +373,6 @@ export const Editor: React.FC<EditorProps> = ({ page: initialPage, onSave, onBac
         onSelectImage={handleApplyImage}
         title={imagePickerConfig.title}
         targetType={imagePickerConfig.type}
-      />
-
-      {/* Interactive Logo Manager Modal */}
-      <LogoManagerModal
-        isOpen={isLogoManagerOpen}
-        onClose={() => setIsLogoManagerOpen(false)}
-        logos={page.socialProof.marqueeLogos}
-        colorMode={page.socialProof.logoColorMode || "accent"}
-        onUpdateLogos={(newLogos, newColorMode) => {
-          updatePage((p) => ({
-            ...p,
-            socialProof: {
-              ...p.socialProof,
-              marqueeLogos: newLogos,
-              logoColorMode: newColorMode,
-            },
-          }));
-          showNotification("Logos e cores atualizadas!");
-        }}
-        accentColorName={page.accentColor}
       />
 
       {/* Interactive Icon Picker Modal */}
@@ -1298,6 +1279,56 @@ export const Editor: React.FC<EditorProps> = ({ page: initialPage, onSave, onBac
                                 }`}
                               >
                                 {mode.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Marquee Speed Selector */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="block text-xs font-medium text-zinc-300">
+                            Velocidade dos Logos
+                          </label>
+                          <span className="text-[11px] text-purple-400 font-semibold">
+                            {(page.socialProof.marqueeSpeed || "medium") === "stopped"
+                              ? "Parado (Fixo)"
+                              : (page.socialProof.marqueeSpeed || "medium") === "slow"
+                              ? "Lento (80s)"
+                              : (page.socialProof.marqueeSpeed || "medium") === "fast"
+                              ? "Rápido (30s)"
+                              : "Médio (50s)"}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-4 gap-1 p-1 bg-zinc-900 rounded-xl border border-zinc-800">
+                          {[
+                            { id: "stopped", label: "Parado", desc: "Fixo" },
+                            { id: "slow", label: "Lento", desc: "80s" },
+                            { id: "medium", label: "Médio", desc: "50s" },
+                            { id: "fast", label: "Rápido", desc: "30s" },
+                          ].map((sp) => {
+                            const isSelected = (page.socialProof.marqueeSpeed || "medium") === sp.id;
+                            return (
+                              <button
+                                key={sp.id}
+                                type="button"
+                                onClick={() =>
+                                  updatePage((p) => ({
+                                    ...p,
+                                    socialProof: {
+                                      ...p.socialProof,
+                                      marqueeSpeed: sp.id as MarqueeSpeed,
+                                    },
+                                  }))
+                                }
+                                className={`py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                                  isSelected
+                                    ? "bg-purple-600 text-white shadow"
+                                    : "text-zinc-400 hover:text-white"
+                                }`}
+                              >
+                                {sp.label}
                               </button>
                             );
                           })}
@@ -2843,8 +2874,18 @@ export const Editor: React.FC<EditorProps> = ({ page: initialPage, onSave, onBac
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="text-xs font-bold text-white">Logos de Prova Social</div>
-                        <div className="text-[11px] text-zinc-400">
-                          {page.socialProof.marqueeLogos.length} marcas no letreiro
+                        <div className="text-[11px] text-zinc-400 flex items-center gap-1.5 mt-0.5">
+                          <span>{page.socialProof.marqueeLogos.length} marcas</span>
+                          <span>•</span>
+                          <span className="text-purple-400 font-semibold">
+                            {(page.socialProof.marqueeSpeed || "medium") === "stopped"
+                              ? "Parado"
+                              : (page.socialProof.marqueeSpeed || "medium") === "slow"
+                              ? "Lento"
+                              : (page.socialProof.marqueeSpeed || "medium") === "fast"
+                              ? "Rápido"
+                              : "Médio"}
+                          </span>
                         </div>
                       </div>
 
@@ -3071,8 +3112,9 @@ export const Editor: React.FC<EditorProps> = ({ page: initialPage, onSave, onBac
         logoItems={page.socialProof?.logoItems}
         colorMode={page.socialProof?.logoColorMode || "original"}
         logoSize={page.socialProof?.logoSize || "sm"}
+        marqueeSpeed={page.socialProof?.marqueeSpeed || "medium"}
         accentColorName={page.accentColor}
-        onUpdateLogos={(updatedLogos, mode, updatedItems, size) => {
+        onUpdateLogos={(updatedLogos, mode, updatedItems, size, speed) => {
           updatePage((p) => ({
             ...p,
             socialProof: {
@@ -3081,9 +3123,10 @@ export const Editor: React.FC<EditorProps> = ({ page: initialPage, onSave, onBac
               logoItems: updatedItems || p.socialProof.logoItems,
               logoColorMode: mode,
               logoSize: size || p.socialProof.logoSize || "sm",
+              marqueeSpeed: speed || p.socialProof.marqueeSpeed || "medium",
             },
           }));
-          showNotification("Logos, cores e tamanho atualizados!");
+          showNotification("Logos, cores, tamanho e velocidade atualizados!");
         }}
       />
 

@@ -214,22 +214,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="max-w-3xl space-y-4">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-bold border border-purple-500/30">
               <Zap className="w-3.5 h-3.5" />
-              <span>GERAÇÃO AUTOMÁTICA EM SEGUNDOS</span>
+              <span>GERAÇÃO COM LAN • AGENTE DE IA CRO</span>
             </div>
             <h2 className="text-2xl sm:text-4xl font-bold text-white tracking-tight">
-              Descreva sua oferta e a IA gera uma Landing Page pronta para rodar tráfego
+              Descreva sua oferta e o LAN gera uma Landing Page pronta para rodar tráfego
             </h2>
             <p className="text-zinc-400 text-sm sm:text-base leading-relaxed">
-              O modelo pesquisa as dores do seu público, cria headlines agressivas, monta o Quiz de 3 etapas, estrutura o Bento Grid e configura o formulário de conversão final.
+              O LAN pesquisa as dores do seu público, cria headlines agressivas, monta o Quiz de 3 etapas, estrutura o Bento Grid e configura o formulário de conversão final.
             </p>
 
             <div className="pt-2">
               <button
                 onClick={onOpenAiGenerator}
-                className="px-8 py-4 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold text-sm sm:text-base shadow-xl shadow-purple-950/60 inline-flex items-center gap-2 cursor-pointer transition-transform hover:scale-[1.02]"
+                className="px-8 py-4 rounded-2xl bg-gradient-to-r from-purple-600 via-fuchsia-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold text-sm sm:text-base shadow-xl shadow-purple-950/60 inline-flex items-center gap-2 cursor-pointer transition-transform hover:scale-[1.02]"
               >
                 <Sparkles className="w-5 h-5" />
-                <span>Abrir Agente de IA & Prompt</span>
+                <span>Abrir LAN • Agente de IA CRO</span>
               </button>
             </div>
           </div>

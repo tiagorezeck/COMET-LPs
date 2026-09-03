@@ -223,11 +223,14 @@ export interface HeroSection {
   availableFormats?: string;
 }
 
+export type MarqueeSpeed = "stopped" | "slow" | "medium" | "fast";
+
 export interface SocialProofSection {
   marqueeTitle: string;
   metrics: MetricItem[];
   marqueeLogos: string[];
   logoItems?: LogoItem[];
+  marqueeSpeed?: MarqueeSpeed;
   // Visual Customizations
   logoColorMode?: LogoColorMode;
   logoSize?: "xs" | "sm" | "md" | "lg" | "xl";
